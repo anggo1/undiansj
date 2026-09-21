@@ -857,6 +857,26 @@ public function add_item()
     );
 }
 
+public function update_item()
+{
+    $id = (int) $this->input->post('item_id');
+    $name = trim((string) $this->input->post('item_name'));
+    $color = trim((string) $this->input->post('color'));
+    $stock = (int) $this->input->post('stock');
+    $send = function ($data) { return $this->output->set_content_type('application/json')->set_output(json_encode($data)); };
+
+    if ($id < 1 || $name === '' || $stock < 0 || !preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+        return $send(array('status' => 'error', 'message' => 'Data hadiah tidak valid.'));
+    }
+    $item = $this->db->get_where('items', array('id' => $id))->row();
+    if (!$item) return $send(array('status' => 'error', 'message' => 'Hadiah tidak ditemukan.'));
+
+    $used = isset($item->total_terundi) ? (int) $item->total_terundi : 0;
+    if ($stock < $used) return $send(array('status' => 'error', 'message' => 'Stok tidak boleh kurang dari jumlah yang sudah terundi: ' . $used . '.'));
+
+    $this->db->where('id', $id)->update('items', array('item_name' => $name, 'color' => $color, 'stock' => $stock));
+    return $send(array('status' => 'success', 'item_id' => $id, 'item_name' => $name, 'color' => $color, 'stock' => $stock));
+}
 
 public function delete_item()
 {
