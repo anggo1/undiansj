@@ -265,6 +265,9 @@ class Undian extends CI_Controller
             'employee_name' =>
                 $winner['name'],
 
+            'employee_nik' =>
+                $winner['nik'],
+
             'employee_department' =>
                 isset(
                     $winner['department']
@@ -305,6 +308,9 @@ class Undian extends CI_Controller
 
                 'winner_name' =>
                     $winner['name'],
+                
+                'winner_nik' =>
+                    $winner['nik'],
 
                 'winner_dept' =>
                     isset(
@@ -641,6 +647,9 @@ class Undian extends CI_Controller
 
                 'winner_name' =>
                     $employee['name'],
+
+                'winner_nik' =>
+                    $employee['nik'],
 
                 'winner_dept' =>
                     isset(

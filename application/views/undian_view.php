@@ -37,9 +37,10 @@
         .draw-number { display: block; min-height: 84px; margin-top: 10px; color: #fff; font-size: clamp(48px, 10vw, 84px); font-variant-numeric: tabular-nums; line-height: 1; }
         .result-box { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; min-height: 85px; margin-bottom: 18px; padding: 15px 20px; border: 1px solid #1f2937; border-radius: 16px; background: #0f172a; text-align: center; }
         .result-status { margin-bottom: 6px; color: #9ca3af; font-size: 12px; }
-        .result-name { color: #fff; font-size: 24px; font-weight: 900; }
-        .result-dept { margin-top: 4px; color: #9ca3af; font-size: 13px; }
-        .result-item { margin-top: 5px; color: #a78bfa; font-size: 13px; font-weight: 700; }
+        .result-name { color: #fff; font-size: 30px; font-weight: 900; }
+        .result-nik { margin-top: 5px; color: #c4b5fd; font-family: monospace; font-size: 30px; font-weight: 900; }
+        .result-dept { margin-top: 4px; color: #9ca3af; font-size: 30px; }
+        .result-item { margin-top: 5px; color: #a78bfa; font-size: 30px; font-weight: 700; }
         .winner-actions { margin: 18px 0 25px; }
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
         .stat-card, .history-card { border: 1px solid #1f2937; border-radius: 16px; background: #0f172a; }
@@ -95,9 +96,16 @@
 
         <div class="result-box" id="resultBox">
             <div class="result-status" id="resultStatus">Pilih hadiah dan tekan Undi Nomor</div>
-            <div class="result-name" id="resultName">—</div>
-            <div class="result-dept" id="resultDept"></div>
-            <div class="result-item" id="resultItem"></div>
+            <table style="width:100%; margin-top:5px; text-align:center;">
+                <tr>
+                    <td style="width:50%;"><div class="result-name" id="resultName"></div></td>
+                    <td style="width:50%;"><div class="result-nik" id="resultNik"></div></td>
+                </tr>
+                <tr>
+                    <td><div class="result-dept" id="resultDept"></div></td>
+                    <td><div class="result-item" id="resultItem"></div></td>
+                </tr>
+            </table>
         </div>
 
         <div class="winner-actions" id="winnerActions" style="display:none;">
@@ -139,6 +147,7 @@ const itemSelect = document.getElementById('itemSelect');
 const drawNumber = document.getElementById('drawNumber');
 const resultStatus = document.getElementById('resultStatus');
 const resultName = document.getElementById('resultName');
+const resultNik = document.getElementById('resultNik');
 const resultDept = document.getElementById('resultDept');
 const resultItem = document.getElementById('resultItem');
 const candidateCount = document.getElementById('candidateCount');
@@ -154,10 +163,16 @@ let drawInterval = null;
 let stopRequested = false;
 
 function playVictory() { if (!soundMuted) { try { victorySound.currentTime = 0; victorySound.play().catch(function () {}); } catch (error) {} } }
+function stopVictory() { try { victorySound.pause(); victorySound.currentTime = 0; } catch (error) {} }
 function playDrum() { if (!soundMuted) { try { drumSound.currentTime = 0; drumSound.play().catch(function () {}); } catch (error) {} } }
 function stopDrum() { try { drumSound.pause(); drumSound.currentTime = 0; } catch (error) {} }
-function showWinner(name, department, itemName) { resultStatus.textContent = 'CALON PEMENANG'; resultName.textContent = name || '—'; resultDept.textContent = department || ''; resultItem.textContent = itemName ? '🎁 ' + itemName : ''; }
-function resetResult() { resultStatus.textContent = 'Pilih hadiah dan tekan Undi Nomor'; resultName.textContent = '—'; resultDept.textContent = ''; resultItem.textContent = ''; drawNumber.textContent = '—'; }
+function showWinner(name, nik, department, itemName) { 
+    resultStatus.textContent = 'CALON PEMENANG'; 
+    resultName.textContent = 'NAMA: ' + name || '—'; 
+    resultNik.textContent = nik ? 'NIK: ' + nik : ''; 
+    resultDept.textContent = 'DEPARTEMEN: ' + department || ''; 
+    resultItem.textContent = itemName ? 'Hadiah : 🎁 ' + itemName : ''; }
+function resetResult() { resultStatus.textContent = 'Pilih hadiah dan tekan Undi Nomor'; resultName.textContent = '—'; resultNik.textContent = ''; resultDept.textContent = ''; resultItem.textContent = ''; drawNumber.textContent = '—'; }
 function showWinnerActions() { winnerActions.style.display = 'flex'; spinBtn.style.display = 'none'; }
 function hideWinnerActions() { winnerActions.style.display = 'none'; spinBtn.style.display = 'inline-block'; }
 function updateCandidateCount(remainingCount) { candidateCount.textContent = Math.max(0, parseInt(remainingCount, 10) || 0); }
@@ -188,9 +203,9 @@ function stopNumberAnimation() { if (drawInterval) { clearInterval(drawInterval)
 function finishDraw(data) {
     stopNumberAnimation();
     pendingDrawData = null;
-    currentPendingWinner = { employee_id: data.winner_id, employee_number: data.winner_number || data.winner_id, employee_name: data.winner_name, employee_department: data.winner_dept, item_id: data.item_id, item_name: data.item_name };
+    currentPendingWinner = { employee_id: data.winner_id, employee_number: data.winner_number || data.winner_id, employee_nik: data.winner_nik || '', employee_name: data.winner_name, employee_department: data.winner_dept, item_id: data.item_id, item_name: data.item_name };
     drawNumber.textContent = currentPendingWinner.employee_number;
-    showWinner(data.winner_name, data.winner_dept, data.item_name);
+    showWinner(data.winner_name, data.winner_nik, data.winner_dept, data.item_name);
     stopBtn.style.display = 'none';
     showWinnerActions();
     playVictory();
@@ -198,7 +213,7 @@ function finishDraw(data) {
     itemSelect.disabled = true;
 }
 
-muteBtn.addEventListener('click', function () { soundMuted = !soundMuted; if (soundMuted) stopDrum(); muteBtn.textContent = soundMuted ? '🔇' : '🔊'; });
+muteBtn.addEventListener('click', function () { soundMuted = !soundMuted; if (soundMuted) { stopDrum(); stopVictory(); } muteBtn.textContent = soundMuted ? '🔇' : '🔊'; });
 
 spinBtn.addEventListener('click', function () {
     if (isDrawing) return;
@@ -209,12 +224,13 @@ spinBtn.addEventListener('click', function () {
 
     setDrawingState(true);
     resultStatus.textContent = 'MENENTUKAN NOMOR PEMENANG...';
-    resultName.textContent = '—'; resultDept.textContent = ''; resultItem.textContent = '';
+    resultName.textContent = '—'; resultNik.textContent = ''; resultDept.textContent = ''; resultItem.textContent = '';
     stopRequested = false;
     pendingDrawData = null;
     spinBtn.style.display = 'none';
     stopBtn.style.display = 'inline-block';
     stopBtn.disabled = false;
+    stopVictory();
     startNumberAnimation();
     playDrum();
     fetch('<?= site_url('undian/draw'); ?>', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: 'item_id=' + encodeURIComponent(itemId) })
@@ -239,6 +255,7 @@ stopBtn.addEventListener('click', function () {
 
 saveWinnerBtn.addEventListener('click', function () {
     if (!currentPendingWinner) return alert('Tidak ada calon pemenang.');
+    stopVictory();
     if (!confirm('Simpan ' + currentPendingWinner.employee_name + ' sebagai pemenang ' + currentPendingWinner.item_name + '?')) return;
     saveWinnerBtn.disabled = true; skipWinnerBtn.disabled = true; saveWinnerBtn.textContent = '⏳ Menyimpan...';
     fetch('<?= site_url('undian/save_winner'); ?>', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: '' })
@@ -248,8 +265,9 @@ saveWinnerBtn.addEventListener('click', function () {
             updateCandidateCount(data.remaining_candidate_count !== undefined ? data.remaining_candidate_count : parseInt(candidateCount.textContent, 10) - 1);
             updateItemStock(data.item_id, parseInt(data.remaining_stock, 10));
             addWinnerToHistory(data.item_id, data.winner_name);
+            const savedWinnerNik = currentPendingWinner.employee_nik;
             currentPendingWinner = null;
-            resultStatus.textContent = 'PEMENANG BERHASIL DISIMPAN'; resultName.textContent = data.winner_name; resultDept.textContent = data.winner_dept || ''; resultItem.textContent = '🎁 ' + data.item_name;
+            resultStatus.textContent = 'PEMENANG BERHASIL DISIMPAN'; resultName.textContent = data.winner_name; resultNik.textContent = (data.winner_nik || savedWinnerNik) ? 'NIK: ' + (data.winner_nik || savedWinnerNik) : ''; resultDept.textContent = data.winner_dept || ''; resultItem.textContent = '🎁 ' + data.item_name;
             hideWinnerActions(); itemSelect.disabled = false; spinBtn.disabled = false; saveWinnerBtn.disabled = false; skipWinnerBtn.disabled = false; saveWinnerBtn.textContent = '💾 Simpan Pemenang';
             const selected = itemSelect.querySelector('option[value="' + data.item_id + '"]'); if (selected && selected.disabled) itemSelect.value = '';
         })
@@ -258,20 +276,21 @@ saveWinnerBtn.addEventListener('click', function () {
 
 skipWinnerBtn.addEventListener('click', function () {
     if (!currentPendingWinner) return alert('Tidak ada calon pemenang.');
+    stopVictory();
     if (!confirm('Skip ' + currentPendingWinner.employee_name + '? Orang ini tidak akan disimpan sebagai pemenang.')) return;
     saveWinnerBtn.disabled = true; skipWinnerBtn.disabled = true; skipWinnerBtn.textContent = '⏳ Memproses...';
     fetch('<?= site_url('undian/skip_winner'); ?>', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: '' })
         .then(function (response) { return response.json(); })
         .then(function (data) {
             if (data.status !== 'success') throw new Error(data.message || 'Gagal melakukan skip.');
-            resultStatus.textContent = 'CALON PEMENANG DI-SKIP'; resultName.textContent = data.skipped_name || currentPendingWinner.employee_name; resultDept.textContent = ''; resultItem.textContent = 'Orang tidak ada — belum disimpan';
+            resultStatus.textContent = 'CALON PEMENANG DI-SKIP'; resultName.textContent = data.skipped_name || currentPendingWinner.employee_name; resultNik.textContent = ''; resultDept.textContent = ''; resultItem.textContent = 'Orang tidak ada — belum disimpan';
             currentPendingWinner = null; drawNumber.textContent = '—'; hideWinnerActions(); itemSelect.disabled = false; spinBtn.disabled = false; saveWinnerBtn.disabled = false; skipWinnerBtn.disabled = false; skipWinnerBtn.textContent = '⏭️ Skip / Orang Tidak Ada';
         })
         .catch(function (error) { alert(error.message || 'Gagal melakukan skip.'); saveWinnerBtn.disabled = false; skipWinnerBtn.disabled = false; skipWinnerBtn.textContent = '⏭️ Skip / Orang Tidak Ada'; });
 });
 
 itemSelect.addEventListener('change', function () { const option = itemSelect.options[itemSelect.selectedIndex]; if (option && option.value && parseInt(option.dataset.stock || 0, 10) <= 0) { alert('Stok hadiah ini sudah habis.'); itemSelect.value = ''; } });
-if (currentPendingWinner) { itemSelect.value = currentPendingWinner.item_id; drawNumber.textContent = currentPendingWinner.employee_number || currentPendingWinner.employee_id; showWinner(currentPendingWinner.employee_name, currentPendingWinner.employee_department, currentPendingWinner.item_name); showWinnerActions(); itemSelect.disabled = true; spinBtn.disabled = true; }
+if (currentPendingWinner) { itemSelect.value = currentPendingWinner.item_id; drawNumber.textContent = currentPendingWinner.employee_number || currentPendingWinner.employee_id; showWinner(currentPendingWinner.employee_name, currentPendingWinner.employee_nik, currentPendingWinner.employee_department, currentPendingWinner.item_name); showWinnerActions(); itemSelect.disabled = true; spinBtn.disabled = true; }
 updateTotalStock();
 </script>
 </body>
