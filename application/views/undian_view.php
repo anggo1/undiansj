@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Lucky Draw - Undi Nomor</title>
     <style>
+        .draw-container {
+    display: flex;
+    justify-content: center; /* Membuat kedua panel berada di tengah halaman */
+    gap: 20px;              /* Memberikan jarak pemisah antara panel kiri dan kanan */
+    max-width: 1000px;      /* Batas maksimal lebar total gabungan kedua panel */
+    margin: 40px auto;       /* Membuat kontainer berada di tengah halaman secara horizontal */
+    flex-wrap: wrap;        /* Otomatis turun ke bawah jika dibuka di layar HP yang sempit */
+}
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { min-height: 100vh; background: #0b0f19; color: #fff; font-family: Arial, Helvetica, sans-serif; }
         .container { width: 100%; max-width: 1200px; margin: auto; padding: 35px 25px 50px; }
@@ -22,7 +30,13 @@
         button { border: none; cursor: pointer; font-family: inherit; transition: all .2s ease; }
         .sound-btn { width: 46px; height: 46px; border: 1px solid #374151; border-radius: 12px; background: #1f2937; color: #fff; font-size: 18px; }
         .sound-btn:hover { background: #374151; }
-        .spin-btn, .stop-btn, .save-btn, .skip-btn { padding: 14px 24px; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 800; }
+        .spin-btn, .stop-btn, .save-btn, .skip-btn { 
+            padding: 14px 24px; 
+            border-radius: 12px; 
+            color: #fff; 
+            font-size: 14px; 
+            max-width: 100%; 
+            font-weight: 800; }
         .spin-btn { background: #8b5cf6; box-shadow: 0 8px 25px rgba(139, 92, 246, .25); }
         .spin-btn:hover { background: #7c3aed; transform: translateY(-1px); }
         .stop-btn { background: #ef4444; box-shadow: 0 8px 25px rgba(239, 68, 68, .25); }
@@ -32,7 +46,25 @@
         .skip-btn { border: 1px solid #4b5563; background: #374151; }
         .skip-btn:hover { background: #4b5563; }
         button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-        .draw-panel { max-width: 460px; margin: 20px auto 30px; padding: 28px 24px; border: 1px solid #312e81; border-radius: 18px; background: linear-gradient(135deg, #171334, #0f172a); text-align: center; }
+        .draw-panel {
+    flex: 1;                /* Membuat panel kiri fleksibel mengisi ruang */
+    max-width: 460px; 
+    padding: 28px 24px; 
+    border: 1px solid #312e81; 
+    border-radius: 18px; 
+    background: linear-gradient(135deg, #171334, #0f172a); 
+    text-align: center; 
+}
+
+.draw-panel2 {
+    flex: 1;                /* Membuat panel kanan fleksibel mengisi ruang */
+    max-width: 100%; 
+    padding: 28px 24px; 
+    border: 1px solid #312e81; 
+    border-radius: 18px; 
+    background: linear-gradient(135deg, #171334, #0f172a); 
+    text-align: center; 
+}
         .draw-label { display: block; color: #a78bfa; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; }
         .draw-number { display: block; min-height: 84px; margin-top: 10px; color: #fff; font-size: clamp(48px, 10vw, 84px); font-variant-numeric: tabular-nums; line-height: 1; }
         .result-box { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; min-height: 85px; margin-bottom: 18px; padding: 15px 20px; border: 1px solid #1f2937; border-radius: 16px; background: #0f172a; text-align: center; }
@@ -63,8 +95,7 @@
 <body>
 <div class="container">
     <div class="showcase">
-        <div class="tagline">Live Lucky Draw</div>
-        <h1>Undian Hadiah Karyawan</h1>
+        <h1>Undian Hadiah Karyawan Sinar Jaya Group</h1>
         <p>Sistem pengundian hadiah secara langsung dan transparan.</p>
     </div>
 
@@ -85,14 +116,28 @@
                 <?php endforeach; ?>
             </select>
             <button type="button" class="sound-btn" id="muteBtn" title="Aktif/nonaktifkan suara">🔊</button>
-            <button type="button" class="spin-btn" id="spinBtn">🎲 UNDI NOMOR</button>
-            <button type="button" class="stop-btn" id="stopBtn" style="display:none;">⏹ STOP UNDI</button>
+        </div>
+        <div class="draw-container">
+
+    <!-- Panel Kiri (Tempat Angka Terpilih) -->
+    <div class="draw-panel">
+            <span class="draw-label">NOMOR PESERTA TERPILIH</span>
+            <strong class="draw-number" id="drawNumber"></strong>
+        <!-- Tempat memunculkan hasil angka/karyawan -->
+    
+
+    <!-- Panel Kanan (Tempat Tombol Draw) -->
+        <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px;">
+            <!-- Tombol Sound  -->
+            <!-- Tombol Undi -->
+            <button type="button" class="draw-panel2 spin-btn" id="spinBtn">🎲 UNDI NOMOR</button>
+            <button type="button" class="draw-panel2 stop-btn" id="stopBtn" style="display:none;">⏹ STOP UNDI</button>
         </div>
 
-        <div class="draw-panel" aria-live="polite">
-            <span class="draw-label">NOMOR PESERTA TERPILIH</span>
-            <strong class="draw-number" id="drawNumber">—</strong>
-        </div>
+</div>
+
+
+</div>
 
         <div class="result-box" id="resultBox">
             <div class="result-status" id="resultStatus">Pilih hadiah dan tekan Undi Nomor</div>
@@ -216,6 +261,7 @@ function finishDraw(data) {
 muteBtn.addEventListener('click', function () { soundMuted = !soundMuted; if (soundMuted) { stopDrum(); stopVictory(); } muteBtn.textContent = soundMuted ? '🔇' : '🔊'; });
 
 spinBtn.addEventListener('click', function () {
+    //launchIntoFullscreen(document.documentElement);
     if (isDrawing) return;
     if (currentPendingWinner) return alert('Masih ada calon pemenang yang belum diproses. Silakan Simpan atau Skip terlebih dahulu.');
     const itemId = parseInt(itemSelect.value || 0, 10);
@@ -260,16 +306,38 @@ saveWinnerBtn.addEventListener('click', function () {
     saveWinnerBtn.disabled = true; skipWinnerBtn.disabled = true; saveWinnerBtn.textContent = '⏳ Menyimpan...';
     fetch('<?= site_url('undian/save_winner'); ?>', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: '' })
         .then(function (response) { return response.json(); })
-        .then(function (data) {
+         .then(function (data) {
             if (data.status !== 'success') throw new Error(data.message || 'Pemenang gagal disimpan.');
+            
+            // 1. Perbarui sisa kandidat dan stok item di background
             updateCandidateCount(data.remaining_candidate_count !== undefined ? data.remaining_candidate_count : parseInt(candidateCount.textContent, 10) - 1);
             updateItemStock(data.item_id, parseInt(data.remaining_stock, 10));
             addWinnerToHistory(data.item_id, data.winner_name);
-            const savedWinnerNik = currentPendingWinner.employee_nik;
+            
+            // 2. Kosongkan data calon pemenang yang baru saja disimpan
             currentPendingWinner = null;
-            resultStatus.textContent = 'PEMENANG BERHASIL DISIMPAN'; resultName.textContent = data.winner_name; resultNik.textContent = (data.winner_nik || savedWinnerNik) ? 'NIK: ' + (data.winner_nik || savedWinnerNik) : ''; resultDept.textContent = data.winner_dept || ''; resultItem.textContent = '🎁 ' + data.item_name;
-            hideWinnerActions(); itemSelect.disabled = false; spinBtn.disabled = false; saveWinnerBtn.disabled = false; skipWinnerBtn.disabled = false; saveWinnerBtn.textContent = '💾 Simpan Pemenang';
-            const selected = itemSelect.querySelector('option[value="' + data.item_id + '"]'); if (selected && selected.disabled) itemSelect.value = '';
+            
+            // 3. Reset teks tampilan hasil undian menjadi kosong / default seperti baru
+            resultStatus.textContent = 'SIAP MEMULAI UNDIAN'; 
+            resultName.textContent = '-'; 
+            resultNik.textContent = ''; 
+            resultDept.textContent = ''; 
+            resultItem.textContent = '';
+            
+            // 4. Aktifkan kembali kontrol tombol utama
+            hideWinnerActions(); 
+            itemSelect.disabled = false; 
+            spinBtn.disabled = false; 
+            saveWinnerBtn.disabled = false; 
+            skipWinnerBtn.disabled = false; 
+            saveWinnerBtn.textContent = '💾 Simpan Pemenang';
+            
+            // 5. Kembalikan dropdown pilihan item ke opsi default (kosong)
+            itemSelect.value = ''; 
+
+            // tambahan agar halaman di-refresh untuk menampilkan data terbaru dari server (opsional)
+            location.reload(); 
+           // alert('Data pemenang disimpan dan tampilan telah di-reset!');
         })
         .catch(function (error) { alert(error.message || 'Gagal menyimpan pemenang.'); saveWinnerBtn.disabled = false; skipWinnerBtn.disabled = false; saveWinnerBtn.textContent = '💾 Simpan Pemenang'; });
 });
@@ -292,6 +360,18 @@ skipWinnerBtn.addEventListener('click', function () {
 itemSelect.addEventListener('change', function () { const option = itemSelect.options[itemSelect.selectedIndex]; if (option && option.value && parseInt(option.dataset.stock || 0, 10) <= 0) { alert('Stok hadiah ini sudah habis.'); itemSelect.value = ''; } });
 if (currentPendingWinner) { itemSelect.value = currentPendingWinner.item_id; drawNumber.textContent = currentPendingWinner.employee_number || currentPendingWinner.employee_id; showWinner(currentPendingWinner.employee_name, currentPendingWinner.employee_nik, currentPendingWinner.employee_department, currentPendingWinner.item_name); showWinnerActions(); itemSelect.disabled = true; spinBtn.disabled = true; }
 updateTotalStock();
+function launchIntoFullscreen(element) {
+    if(element.requestFullscreen) {
+        element.requestFullscreen();
+    } else if(element.mozRequestFullScreen) { // Firefox
+        element.mozRequestFullScreen();
+    } else if(element.webkitRequestFullscreen) { // Chrome, Safari & Opera
+        element.webkitRequestFullscreen();
+    } else if(element.msRequestFullscreen) { // IE/Edge
+        element.msRequestFullscreen();
+    }
+}
 </script>
+
 </body>
 </html>

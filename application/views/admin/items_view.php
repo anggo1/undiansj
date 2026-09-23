@@ -1,44 +1,480 @@
-<!DOCTYPE html>
-<html lang="id">
+<?php
+
+$this->load->view('admin/komponen/header');
+$this->load->view('admin/komponen/sidebar');
+$this->load->view('admin/komponen/navbar');
+
+?>
+
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Kelola Hadiah</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;background:#0b0f19;color:#fff;font-family:Arial,Helvetica,sans-serif}.container{max-width:1100px;margin:auto;padding:40px 25px 60px}.header{text-align:center;margin-bottom:35px}.tagline{color:#8b5cf6;font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px}.header h1{font-size:32px;margin-bottom:10px}.header p,.form-group label{color:#9ca3af;font-size:14px}.card{background:#111827;border:1px solid #1f2937;border-radius:20px;padding:25px;margin-bottom:25px;box-shadow:0 15px 40px rgba(0,0,0,.25)}.card-title{font-size:19px;font-weight:800;margin-bottom:20px}.form-grid{display:grid;grid-template-columns:1fr 180px 150px 160px;gap:15px;align-items:end}.form-group{display:flex;flex-direction:column;gap:8px}.form-group label{font-size:12px;font-weight:700}.form-control{width:100%;height:46px;border:1px solid #374151;border-radius:10px;outline:0;background:#0f172a;color:#fff;padding:0 14px;font-size:14px}.form-control:focus{border-color:#8b5cf6}input[type=color]{padding:5px}.add-btn,.save-edit-btn{height:46px;border:0;border-radius:10px;background:#8b5cf6;color:#fff;font-size:14px;font-weight:800;cursor:pointer}.add-btn:hover,.save-edit-btn:hover{background:#7c3aed}button:disabled{opacity:.5;cursor:not-allowed}.table-wrapper{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{padding:14px;text-align:left;border-bottom:1px solid #1f2937}th{color:#9ca3af;font-size:12px}.color-preview{width:30px;height:30px;border:2px solid rgba(255,255,255,.2);border-radius:8px}.stock{font-weight:800}.available{color:#22c55e}.empty{color:#ef4444}.edit-btn,.delete-btn,.cancel-btn{padding:8px 12px;border:1px solid #374151;border-radius:8px;background:#1f2937;color:#fff;font-size:12px;font-weight:700;cursor:pointer}.edit-btn:hover{border-color:#8b5cf6;background:#312e81}.delete-btn:hover{border-color:#ef4444;background:#ef4444}.empty-row{text-align:center;color:#6b7280;padding:30px}.back-btn{display:inline-block;color:#9ca3af;text-decoration:none;font-size:13px;font-weight:700}.modal-backdrop{position:fixed;inset:0;z-index:1000;display:none;justify-content:center;align-items:center;padding:20px;background:rgba(0,0,0,.68)}.modal-backdrop.is-open{display:flex}.modal{width:100%;max-width:560px;padding:24px;border:1px solid #374151;border-radius:18px;background:#111827}.modal h2{margin-bottom:20px}.modal .form-grid{grid-template-columns:1fr 130px}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.cancel-btn,.save-edit-btn{height:42px;padding:0 18px}.cancel-btn:hover{background:#374151}@media(max-width:800px){.form-grid{grid-template-columns:1fr 1fr}}@media(max-width:550px){.container{padding:25px 15px 40px}.header h1{font-size:26px}.form-grid,.modal .form-grid{grid-template-columns:1fr}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Hadiah</title>
+    <style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0
+    }
+
+    body {
+        min-height: 100vh;
+        background: #0b0f19;
+        color: #fff;
+        font-family: Arial, Helvetica, sans-serif
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: auto;
+        padding: 40px 25px 60px
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 35px
+    }
+
+    .tagline {
+        color: #8b5cf6;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 10px
+    }
+
+    .header h1 {
+        font-size: 32px;
+        margin-bottom: 10px
+    }
+
+    .header p,
+    .form-group label {
+        color: #9ca3af;
+        font-size: 14px
+    }
+
+    .card {
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, .25)
+    }
+
+    .card-title {
+        font-size: 19px;
+        font-weight: 800;
+        margin-bottom: 20px
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 180px 150px 160px;
+        gap: 15px;
+        align-items: end
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px
+    }
+
+    .form-group label {
+        font-size: 12px;
+        font-weight: 700
+    }
+
+    .form-control {
+        width: 100%;
+        height: 46px;
+        border: 1px solid #374151;
+        border-radius: 10px;
+        outline: 0;
+        background: #0f172a;
+        color: #fff;
+        padding: 0 14px;
+        font-size: 14px
+    }
+
+    .form-control:focus {
+        border-color: #8b5cf6
+    }
+
+    input[type=color] {
+        padding: 5px
+    }
+
+    .add-btn,
+    .save-edit-btn {
+        height: 46px;
+        border: 0;
+        border-radius: 10px;
+        background: #8b5cf6;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer
+    }
+
+    .add-btn:hover,
+    .save-edit-btn:hover {
+        background: #7c3aed
+    }
+
+    button:disabled {
+        opacity: .5;
+        cursor: not-allowed
+    }
+
+    .table-wrapper {
+        overflow-x: auto
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse
+    }
+
+    th,
+    td {
+        padding: 14px;
+        text-align: left;
+        border-bottom: 1px solid #1f2937
+    }
+
+    th {
+        color: #9ca3af;
+        font-size: 12px
+    }
+
+    .color-preview {
+        width: 30px;
+        height: 30px;
+        border: 2px solid rgba(255, 255, 255, .2);
+        border-radius: 8px
+    }
+
+    .stock {
+        font-weight: 800
+    }
+
+    .available {
+        color: #22c55e
+    }
+
+    .empty {
+        color: #ef4444
+    }
+
+    .edit-btn,
+    .delete-btn,
+    .cancel-btn {
+        padding: 8px 12px;
+        border: 1px solid #374151;
+        border-radius: 8px;
+        background: #1f2937;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer
+    }
+
+    .edit-btn:hover {
+        border-color: #8b5cf6;
+        background: #312e81
+    }
+
+    .delete-btn:hover {
+        border-color: #ef4444;
+        background: #ef4444
+    }
+
+    .empty-row {
+        text-align: center;
+        color: #6b7280;
+        padding: 30px
+    }
+
+    .back-btn {
+        display: inline-block;
+        color: #9ca3af;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 700
+    }
+
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, .68)
+    }
+
+    .modal-backdrop.is-open {
+        display: flex
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 560px;
+        padding: 24px;
+        border: 1px solid #374151;
+        border-radius: 18px;
+        background: #111827
+    }
+
+    .modal h2 {
+        margin-bottom: 20px
+    }
+
+    .modal .form-grid {
+        grid-template-columns: 1fr 130px
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px
+    }
+
+    .cancel-btn,
+    .save-edit-btn {
+        height: 42px;
+        padding: 0 18px
+    }
+
+    .cancel-btn:hover {
+        background: #374151
+    }
+
+    @media(max-width:800px) {
+        .form-grid {
+            grid-template-columns: 1fr 1fr
+        }
+    }
+
+    @media(max-width:550px) {
+        .container {
+            padding: 25px 15px 40px
+        }
+
+        .header h1 {
+            font-size: 26px
+        }
+
+        .form-grid,
+        .modal .form-grid {
+            grid-template-columns: 1fr
+        }
+    }
+    </style>
 </head>
+
 <body>
-<div class="container">
- <div class="header"><div class="tagline">Lucky Draw Management</div><h1>Kelola Hadiah</h1><p>Tambahkan dan kelola hadiah yang akan digunakan dalam pengundian.</p></div>
- <div class="card"><div class="card-title">Tambah Hadiah Baru</div>
-  <form id="itemForm"><div class="form-grid">
-   <div class="form-group"><label for="itemName">Nama Hadiah</label><input id="itemName" name="item_name" class="form-control" maxlength="100" placeholder="Contoh: Laptop" required></div>
-   <div class="form-group"><label for="itemColor">Warna</label><input type="color" id="itemColor" name="color" class="form-control" value="#8b5cf6" required></div>
-   <div class="form-group"><label for="itemStock">Stok</label><input type="number" id="itemStock" name="stock" class="form-control" value="1" min="0" required></div>
-   <button type="submit" class="add-btn" id="addBtn">+ Tambah Hadiah</button>
-  </div></form>
- </div>
- <div class="card"><div class="card-title">Daftar Hadiah</div><div class="table-wrapper"><table><thead><tr><th>#</th><th>Warna</th><th>Nama Hadiah</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="itemTable">
- <?php if (!empty($items)): foreach ($items as $index => $item): $stock=(int)$item->stock; $used=isset($item->total_terundi)?(int)$item->total_terundi:0; ?>
-  <tr data-item-id="<?= (int)$item->id ?>" data-item-name="<?= htmlspecialchars($item->item_name,ENT_QUOTES,'UTF-8') ?>" data-item-color="<?= htmlspecialchars($item->color,ENT_QUOTES,'UTF-8') ?>" data-item-stock="<?= $stock ?>"><td><?= $index+1 ?></td><td><div class="color-preview" style="background-color:<?= htmlspecialchars($item->color,ENT_QUOTES,'UTF-8') ?>"></div></td><td class="item-name"><?= htmlspecialchars($item->item_name,ENT_QUOTES,'UTF-8') ?></td><td><span class="stock <?= $stock>0?'available':'empty' ?>"><?= $stock ?></span></td><td><button type="button" class="edit-btn" data-action="edit">✏️ Edit</button> <button type="button" class="delete-btn" data-action="delete" <?= $used>0?'disabled':'' ?>>🗑 Hapus</button></td></tr>
- <?php endforeach; else: ?><tr id="emptyRow"><td colspan="5" class="empty-row">Belum ada hadiah.</td></tr><?php endif; ?>
- </tbody></table></div></div>
- <a href="<?= site_url('undian') ?>" class="back-btn">← Kembali ke halaman Undian</a>
-</div>
+    <div class="container">
+        <div class="card">
+            <div class="card-title">Tambah Hadiah Baru</div>
+            <form id="itemForm">
+                <div class="form-grid">
+                    <div class="form-group"><label for="itemName">Nama Hadiah</label><input id="itemName"
+                            name="item_name" class="form-control" maxlength="100" placeholder="Contoh: Laptop" required>
+                    </div>
+                    <div class="form-group"><label for="itemColor">Warna</label><input type="color" id="itemColor"
+                            name="color" class="form-control" value="#8b5cf6" required></div>
+                    <div class="form-group"><label for="itemStock">Stok</label><input type="number" id="itemStock"
+                            name="stock" class="form-control" value="1" min="0" required></div>
+                    <button type="submit" class="add-btn" id="addBtn">+ Tambah Hadiah</button>
+                </div>
+            </form>
+        </div>
+        <div class="card">
+            <div class="card-title">Daftar Hadiah</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Warna</th>
+                            <th>Nama Hadiah</th>
+                            <th>Stok</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemTable">
+                        <?php if (!empty($items)): foreach ($items as $index => $item): $stock=(int)$item->stock; $used=isset($item->total_terundi)?(int)$item->total_terundi:0; ?>
+                        <tr data-item-id="<?= (int)$item->id ?>"
+                            data-item-name="<?= htmlspecialchars($item->item_name,ENT_QUOTES,'UTF-8') ?>"
+                            data-item-color="<?= htmlspecialchars($item->color,ENT_QUOTES,'UTF-8') ?>"
+                            data-item-stock="<?= $stock ?>">
+                            <td><?= $index+1 ?></td>
+                            <td>
+                                <div class="color-preview"
+                                    style="background-color:<?= htmlspecialchars($item->color,ENT_QUOTES,'UTF-8') ?>">
+                                </div>
+                            </td>
+                            <td class="item-name"><?= htmlspecialchars($item->item_name,ENT_QUOTES,'UTF-8') ?></td>
+                            <td><span class="stock <?= $stock>0?'available':'empty' ?>"><?= $stock ?></span></td>
+                            <td><button type="button" class="edit-btn" data-action="edit">✏️ Edit</button> <button
+                                    type="button" class="delete-btn" data-action="delete"
+                                    <?= $used>0?'disabled':'' ?>>🗑 Hapus</button></td>
+                        </tr>
+                        <?php endforeach; else: ?><tr id="emptyRow">
+                            <td colspan="5" class="empty-row">Belum ada hadiah.</td>
+                        </tr><?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-<!-- Modal harus berada sebelum JavaScript. -->
-<div class="modal-backdrop" id="editModal" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true"><h2>Edit Hadiah</h2><form id="editItemForm"><input type="hidden" id="editItemId" name="item_id"><div class="form-grid"><div class="form-group"><label for="editItemName">Nama Hadiah</label><input id="editItemName" name="item_name" class="form-control" maxlength="100" required></div><div class="form-group"><label for="editItemColor">Warna</label><input type="color" id="editItemColor" name="color" class="form-control" required></div><div class="form-group"><label for="editItemStock">Stok</label><input type="number" id="editItemStock" name="stock" class="form-control" min="0" required></div></div><div class="modal-actions"><button type="button" class="cancel-btn" id="cancelEditBtn">Batal</button><button type="submit" class="save-edit-btn" id="saveEditBtn">Simpan Perubahan</button></div></form></div></div>
+    <!-- Modal harus berada sebelum JavaScript. -->
+    <div class="modal-backdrop" id="editModal" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true">
+            <h2>Edit Hadiah</h2>
+            <form id="editItemForm"><input type="hidden" id="editItemId" name="item_id">
+                <div class="form-grid">
+                    <div class="form-group"><label for="editItemName">Nama Hadiah</label><input id="editItemName"
+                            name="item_name" class="form-control" maxlength="100" required></div>
+                    <div class="form-group"><label for="editItemColor">Warna</label><input type="color"
+                            id="editItemColor" name="color" class="form-control" required></div>
+                    <div class="form-group"><label for="editItemStock">Stok</label><input type="number"
+                            id="editItemStock" name="stock" class="form-control" min="0" required></div>
+                </div>
+                <div class="modal-actions"><button type="button" class="cancel-btn"
+                        id="cancelEditBtn">Batal</button><button type="submit" class="save-edit-btn"
+                        id="saveEditBtn">Simpan Perubahan</button></div>
+            </form>
+        </div>
+    </div>
 
-<script>
-const table=document.getElementById('itemTable'), itemForm=document.getElementById('itemForm'), addBtn=document.getElementById('addBtn'), modal=document.getElementById('editModal'), editForm=document.getElementById('editItemForm'), saveEditBtn=document.getElementById('saveEditBtn');
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-function renumber(){[...table.querySelectorAll('tr:not(#emptyRow)')].forEach((row,i)=>row.cells[0].textContent=i+1)}
-function rowHtml(item){const stock=Number(item.stock), cls=stock>0?'available':'empty';return `<tr data-item-id="${Number(item.item_id)}" data-item-name="${esc(item.item_name)}" data-item-color="${esc(item.color)}" data-item-stock="${stock}"><td></td><td><div class="color-preview" style="background-color:${esc(item.color)}"></div></td><td class="item-name">${esc(item.item_name)}</td><td><span class="stock ${cls}">${stock}</span></td><td><button type="button" class="edit-btn" data-action="edit">✏️ Edit</button> <button type="button" class="delete-btn" data-action="delete">🗑 Hapus</button></td></tr>`}
-function closeEdit(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');editForm.reset()}
-function openEdit(row){document.getElementById('editItemId').value=row.dataset.itemId;document.getElementById('editItemName').value=row.dataset.itemName;document.getElementById('editItemColor').value=row.dataset.itemColor||'#8b5cf6';document.getElementById('editItemStock').value=row.dataset.itemStock;modal.classList.add('is-open');modal.setAttribute('aria-hidden','false')}
-async function request(url,body){const res=await fetch(url,{method:'POST',body});const data=await res.json();if(data.status!=='success')throw new Error(data.message||'Permintaan gagal.');return data}
-itemForm.addEventListener('submit',async e=>{e.preventDefault();addBtn.disabled=true;addBtn.textContent='Menambahkan...';try{const data=await request('<?= site_url('undian/add_item') ?>',new FormData(itemForm));document.getElementById('emptyRow')?.remove();table.insertAdjacentHTML('beforeend',rowHtml(data));renumber();itemForm.reset();document.getElementById('itemColor').value='#8b5cf6';document.getElementById('itemStock').value=1;alert('Hadiah berhasil ditambahkan.')}catch(err){alert(err.message)}finally{addBtn.disabled=false;addBtn.textContent='+ Tambah Hadiah'}});
-table.addEventListener('click',async e=>{const button=e.target.closest('button[data-action]');if(!button)return;const row=button.closest('tr');if(button.dataset.action==='edit'){openEdit(row);return}if(!confirm(`Hapus hadiah "${row.dataset.itemName}"?`))return;try{await request('<?= site_url('undian/delete_item') ?>',new URLSearchParams({item_id:row.dataset.itemId}));row.remove();if(!table.querySelector('tr'))table.innerHTML='<tr id="emptyRow"><td colspan="5" class="empty-row">Belum ada hadiah.</td></tr>';renumber();alert('Hadiah berhasil dihapus.')}catch(err){alert(err.message)}});
-document.getElementById('cancelEditBtn').addEventListener('click',closeEdit);modal.addEventListener('click',e=>{if(e.target===modal)closeEdit()});
-editForm.addEventListener('submit',async e=>{e.preventDefault();saveEditBtn.disabled=true;saveEditBtn.textContent='Menyimpan...';try{const data=await request('<?= site_url('undian/update_item') ?>',new FormData(editForm));const row=table.querySelector(`tr[data-item-id="${data.item_id}"]`);if(row){row.dataset.itemName=data.item_name;row.dataset.itemColor=data.color;row.dataset.itemStock=data.stock;row.querySelector('.item-name').textContent=data.item_name;row.querySelector('.color-preview').style.backgroundColor=data.color;const stock=row.querySelector('.stock');stock.textContent=data.stock;stock.className='stock '+(Number(data.stock)>0?'available':'empty')}closeEdit();alert('Hadiah berhasil diperbarui.')}catch(err){alert(err.message)}finally{saveEditBtn.disabled=false;saveEditBtn.textContent='Simpan Perubahan'}});
-</script>
-</body></html>
+    <script>
+    const table = document.getElementById('itemTable'),
+        itemForm = document.getElementById('itemForm'),
+        addBtn = document.getElementById('addBtn'),
+        modal = document.getElementById('editModal'),
+        editForm = document.getElementById('editItemForm'),
+        saveEditBtn = document.getElementById('saveEditBtn');
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    } [c]));
+
+    function renumber() {
+        [...table.querySelectorAll('tr:not(#emptyRow)')].forEach((row, i) => row.cells[0].textContent = i + 1)
+    }
+
+    function rowHtml(item) {
+        const stock = Number(item.stock),
+            cls = stock > 0 ? 'available' : 'empty';
+        return `<tr data-item-id="${Number(item.item_id)}" data-item-name="${esc(item.item_name)}" data-item-color="${esc(item.color)}" data-item-stock="${stock}"><td></td><td><div class="color-preview" style="background-color:${esc(item.color)}"></div></td><td class="item-name">${esc(item.item_name)}</td><td><span class="stock ${cls}">${stock}</span></td><td><button type="button" class="edit-btn" data-action="edit">✏️ Edit</button> <button type="button" class="delete-btn" data-action="delete">🗑 Hapus</button></td></tr>`
+    }
+
+    function closeEdit() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        editForm.reset()
+    }
+
+    function openEdit(row) {
+        document.getElementById('editItemId').value = row.dataset.itemId;
+        document.getElementById('editItemName').value = row.dataset.itemName;
+        document.getElementById('editItemColor').value = row.dataset.itemColor || '#8b5cf6';
+        document.getElementById('editItemStock').value = row.dataset.itemStock;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false')
+    }
+    async function request(url, body) {
+        const res = await fetch(url, {
+            method: 'POST',
+            body
+        });
+        const data = await res.json();
+        if (data.status !== 'success') throw new Error(data.message || 'Permintaan gagal.');
+        return data
+    }
+    itemForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        addBtn.disabled = true;
+        addBtn.textContent = 'Menambahkan...';
+        try {
+            const data = await request('<?= site_url('undian/add_item') ?>', new FormData(itemForm));
+            document.getElementById('emptyRow')?.remove();
+            table.insertAdjacentHTML('beforeend', rowHtml(data));
+            renumber();
+            itemForm.reset();
+            document.getElementById('itemColor').value = '#8b5cf6';
+            document.getElementById('itemStock').value = 1;
+            alert('Hadiah berhasil ditambahkan.')
+        } catch (err) {
+            alert(err.message)
+        } finally {
+            addBtn.disabled = false;
+            addBtn.textContent = '+ Tambah Hadiah'
+        }
+    });
+    table.addEventListener('click', async e => {
+        const button = e.target.closest('button[data-action]');
+        if (!button) return;
+        const row = button.closest('tr');
+        if (button.dataset.action === 'edit') {
+            openEdit(row);
+            return
+        }
+        if (!confirm(`Hapus hadiah "${row.dataset.itemName}"?`)) return;
+        try {
+            await request('<?= site_url('undian/delete_item') ?>', new URLSearchParams({
+                item_id: row.dataset.itemId
+            }));
+            row.remove();
+            if (!table.querySelector('tr')) table.innerHTML =
+                '<tr id="emptyRow"><td colspan="5" class="empty-row">Belum ada hadiah.</td></tr>';
+            renumber();
+            alert('Hadiah berhasil dihapus.')
+        } catch (err) {
+            alert(err.message)
+        }
+    });
+    document.getElementById('cancelEditBtn').addEventListener('click', closeEdit);
+    modal.addEventListener('click', e => {
+        if (e.target === modal) closeEdit()
+    });
+    editForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        saveEditBtn.disabled = true;
+        saveEditBtn.textContent = 'Menyimpan...';
+        try {
+            const data = await request('<?= site_url('undian/update_item') ?>', new FormData(editForm));
+            const row = table.querySelector(`tr[data-item-id="${data.item_id}"]`);
+            if (row) {
+                row.dataset.itemName = data.item_name;
+                row.dataset.itemColor = data.color;
+                row.dataset.itemStock = data.stock;
+                row.querySelector('.item-name').textContent = data.item_name;
+                row.querySelector('.color-preview').style.backgroundColor = data.color;
+                const stock = row.querySelector('.stock');
+                stock.textContent = data.stock;
+                stock.className = 'stock ' + (Number(data.stock) > 0 ? 'available' : 'empty')
+            }
+            closeEdit();
+            alert('Hadiah berhasil diperbarui.')
+        } catch (err) {
+            alert(err.message)
+        } finally {
+            saveEditBtn.disabled = false;
+            saveEditBtn.textContent = 'Simpan Perubahan'
+        }
+    });
+    </script>
+</body>

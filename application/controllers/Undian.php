@@ -493,35 +493,21 @@ class Undian extends CI_Controller
          * =====================================================
          */
         $this->db
-            ->where(
-                'id',
-                $employee_id
-            )
-            ->where(
-                'is_won',
-                0
-            )
-            ->update(
-                'employees',
-                array(
-                    'is_won' => 1
-                )
-            );
+    ->where('nik', $employee['nik'])
+    ->update('employees', array('is_won' => 1));
 
-
-        if (
-            $this->db->affected_rows()
-            !== 1
-        ) {
-
-            $this->db->trans_rollback();
-
-            return $this->_json_response(
-                'error',
-                'Status karyawan gagal diperbarui.',
-                500
-            );
+// Menggunakan < 0 karena jika sukses tapi tidak ada perubahan data, nilainya 0. 
+// Nilai -1 biasanya mengindikasikan query error/gagal.
+if ($this->db->affected_rows() < 0) {
+    $this->db->trans_rollback();
+    return $this->_json_response(
+        'error',
+        'Status karyawan gagal diperbarui karena kesalahan database.',
+        500
+    );
         }
+
+        
 
 
         /*
@@ -572,6 +558,9 @@ class Undian extends CI_Controller
                 array(
                     'employee_id' =>
                         $employee_id,
+                        
+                    'nik' =>
+                        $employee['nik'],
 
                     'item_id' =>
                         $item_id

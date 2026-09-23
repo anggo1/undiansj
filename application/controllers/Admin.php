@@ -6,6 +6,7 @@ class Admin extends CI_Controller {
 	public function __construct(){
 		parent::__construct();
 		$this->load->helper('form');
+        $this->load->model('Survey_model');
 	}
 
 	public function index()
@@ -56,4 +57,56 @@ class Admin extends CI_Controller {
     $this->load->view('admin/winners_report_view', $data);
 }
 
+
+
+    public function results($survey_id) {
+        $data['survey'] = $this->Survey_model->get_survey($survey_id);
+        $data['summary'] = $this->Survey_model->result_summary($survey_id);
+        $data['total'] = $this->Survey_model->total_responses($survey_id);
+        if (!$data['survey']) show_404();
+        $this->load->view('admin/results', $data);
+    }
+     public function Pertanyaan()
+    {
+        $data['survey'] = $this->Survey_model->get_active_survey();
+        if (!$data['survey']) show_404();
+        $data['questions'] = $this->Survey_model->get_questions($data['survey']->id);
+        $data['responses'] = $this->Survey_model->response_count($data['survey']->id);
+        $this->load->view('survey/admin', $data);
+    }
+
+    public function add_question()
+    {
+        $survey = $this->Survey_model->get_active_survey();
+        if (!$survey) show_404();
+        $this->form_validation->set_rules('question_text', 'Pertanyaan', 'trim|required');
+        $this->form_validation->set_rules('question_type', 'Tipe jawaban', 'required|in_list[text,textarea,radio,checkbox,select]');
+        if ($this->form_validation->run() === FALSE) {
+            $this->session->set_flashdata('error', validation_errors());
+            redirect('survey/admin');
+        }
+        $type = $this->input->post('question_type', TRUE);
+        $options = trim($this->input->post('options', TRUE));
+        if (in_array($type, array('radio', 'checkbox', 'select')) && $options === '') {
+            $this->session->set_flashdata('error', 'Pilihan jawaban wajib diisi untuk tipe pertanyaan ini.');
+            redirect('survey/admin');
+        }
+        $this->Survey_model->add_question(array(
+            'survey_id' => $survey->id,
+            'question_text' => $this->input->post('question_text', TRUE),
+            'question_type' => $type,
+            'options' => $options,
+            'is_required' => $this->input->post('is_required') ? 1 : 0,
+            'sort_order' => $this->Survey_model->next_sort_order($survey->id)
+        ));
+        $this->session->set_flashdata('success', 'Pertanyaan berhasil ditambahkan.');
+        redirect('survey/admin');
+    }
+
+    public function delete_question($id)
+    {
+        $this->Survey_model->delete_question((int) $id);
+        $this->session->set_flashdata('success', 'Pertanyaan dihapus.');
+        redirect('survey/admin');
+    }
 }

@@ -44,6 +44,11 @@
                     <i class="fas fa-fw fa-table"></i>
                     <span>Data Hadiah</span></a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="<?= base_url()?>admin/Pertanyaan">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Data Kuesioner</span></a>
+            </li>
 			<li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>admin/user">
                     <i class="fas fa-fw fa-user"></i>
