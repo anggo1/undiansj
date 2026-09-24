@@ -34,6 +34,13 @@
           
 
            <!-- Menu  -->
+            
+
+            <li class="nav-item">
+                <a class="nav-link" href="<?= site_url('Welcome') ?>" target="_blank">
+            <i class="fas fa-external-link-alt fa-sm text-white-50 mr-1"></i>
+                    <span>Undi Hadiah</span></a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>admin/tamu">
                     <i class="fas fa-fw fa-table"></i>
@@ -45,9 +52,14 @@
                     <span>Data Hadiah</span></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="<?= base_url()?>admin/Pertanyaan">
+                <a class="nav-link" href="<?= base_url()?>Survey/title">
                     <i class="fas fa-fw fa-table"></i>
                     <span>Data Kuesioner</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="<?= base_url()?>admin/Pertanyaan">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Pertanyaan Kuesioner</span></a>
             </li>
 			<li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>admin/user">

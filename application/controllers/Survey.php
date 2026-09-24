@@ -6,8 +6,10 @@ class Survey extends CI_Controller
     {
         parent::__construct();
         $this->load->model('Survey_model');
+        $this->load->model('M_survey');
         $this->load->library(array('form_validation', 'session'));
         $this->load->helper(array('url', 'form'));
+        
     }
 
     public function index()
@@ -17,8 +19,76 @@ class Survey extends CI_Controller
         $data['questions'] = $this->Survey_model->get_questions($data['survey']->id);
         $this->load->view('survey/form', $data);
     }
+public function submit()
+{
+    $survey = $this->Survey_model->get_active_survey();
+    if (!$survey) show_404();
+    $questions = $this->Survey_model->get_questions($survey->id);
+    $answers = $this->input->post('answer', TRUE) ?: array();
 
-    public function submit()
+    // --- PROTEKSI BACKEND: Validasi NIK Ganda ---
+    foreach ($questions as $question) {
+        if (strpos(strtolower($question->question_text), 'nik') !== false) {
+            $nik_value = isset($answers[$question->id]) ? trim($answers[$question->id]) : '';
+            if (!empty($nik_value)) {
+                // Silakan sesuaikan nama tabel & kolom di model Anda jika berbeda
+                $this->db->where('question_id', $question->id);
+                $this->db->where('answer_text', $nik_value); // Asumsi kolom jawaban bernama answer_text
+                $is_exist = $this->db->get('survey_answers')->num_rows(); // Ganti survey_answers dengan nama tabel Anda
+
+                if ($is_exist > 0) {
+                    $this->form_validation->set_rules('answer['.$question->id.']', $question->question_text, 'callback_check_failed',
+                        array('check_failed' => 'Maaf, NIK <strong>' . html_escape($nik_value) . '</strong> sudah pernah mengisi survei ini.'));
+                }
+            }
+        }
+
+        // Validasi Wajib Isi bawaan Anda
+        if ($question->is_required) {
+            $this->form_validation->set_rules('answer['.$question->id.']', $question->question_text, 'required',
+                array('required' => 'Pertanyaan <strong>{field}</strong> wajib diisi.'));
+        }
+    }
+
+    if ($this->form_validation->run() === FALSE) {
+        $data = array('survey' => $survey, 'questions' => $questions);
+        $this->load->view('survey/form', $data);
+        return;
+    }
+
+    $response_id = $this->Survey_model->create_response($survey->id);
+    foreach ($questions as $question) {
+        $answer = isset($answers[$question->id]) ? $answers[$question->id] : '';
+        if (is_array($answer)) $answer = implode(' | ', $answer);
+        $this->Survey_model->save_answer($response_id, $question->id, trim($answer));
+    }
+    $this->load->view('survey/success', array('survey' => $survey));
+}
+
+// --- FUNGSI ENDPOINT UNTUK AJAX REAL-TIME ---
+public function check_nik_ajax()
+{
+    $question_id = $this->input->post('question_id', TRUE);
+    $nik_value = trim($this->input->post('nik', TRUE));
+
+    if (empty($question_id) || empty($nik_value)) {
+        echo json_encode(array('status' => 'error', 'message' => 'Data tidak lengkap.'));
+        return;
+    }
+
+    // Ganti 'answers_table' & 'answer_text' sesuai dengan struktur database Anda
+    $this->db->where('question_id', $question_id);
+    $this->db->where('answer_text', $nik_value);
+    $query = $this->db->get('survey_answers');
+
+    if ($query->num_rows() > 0) {
+        echo json_encode(array('status' => 'exists', 'message' => 'NIK sudah terdaftar!'));
+    } else {
+        echo json_encode(array('status' => 'available', 'message' => 'NIK dapat digunakan.'));
+    }
+}
+
+    public function submit_sebelumnya()
     {
         $survey = $this->Survey_model->get_active_survey();
         if (!$survey) show_404();
@@ -89,5 +159,54 @@ class Survey extends CI_Controller
         $this->Survey_model->delete_question((int) $id);
         $this->session->set_flashdata('success', 'Pertanyaan dihapus.');
         redirect('survey/admin');
+    }
+
+    public function title() {
+        $data['surveys'] = $this->M_survey->get_all();
+        $this->load->view('survey/survey_view', $data);
+    }
+
+    public function add() {
+        $title = $this->input->post('title', TRUE);
+        $desc  = $this->input->post('description', TRUE);
+        $active = $this->input->post('is_active', TRUE);
+
+        if (!$title) {
+            echo json_encode(['status' => 'error', 'message' => 'Judul Survey wajib diisi.']);
+            return;
+        }
+
+        $data_insert = ['title' => $title, 'description' => $desc, 'is_active' => (int)$active];
+        $insert_id = $this->M_survey->insert($data_insert);
+
+        if ($insert_id) {
+            echo json_encode(['status' => 'success', 'id' => $insert_id, 'title' => $title, 'description' => $desc, 'is_active' => $active]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan ke database.']);
+        }
+    }
+
+    public function edit() {
+        $id     = $this->input->post('id', TRUE);
+        $title  = $this->input->post('title', TRUE);
+        $desc   = $this->input->post('description', TRUE);
+        $active = $this->input->post('is_active', TRUE);
+
+        $data_update = ['title' => $title, 'description' => $desc, 'is_active' => (int)$active];
+        
+        if ($this->M_survey->update($id, $data_update)) {
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal memperbarui data.']);
+        }
+    }
+
+    public function delete() {
+        $id = $this->input->post('id', TRUE);
+        if ($this->M_survey->delete($id)) {
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Gagal menghapus data.']);
+        }
     }
 }

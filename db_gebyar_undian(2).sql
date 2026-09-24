@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 23, 2026 at 11:07 AM
+-- Generation Time: Sep 24, 2026 at 11:03 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -80,7 +80,7 @@ INSERT INTO `employees` (`id`, `nik`, `name`, `department`, `is_won`) VALUES
 (711, '9311035', 'RIDWAN MINTARJA', 'LOGISTIK', 0),
 (712, '9311036', 'RIDWAN MINTARJA', 'LOGISTIK', 0),
 (713, '9311037', 'RIDWAN MINTARJA', 'LOGISTIK', 0),
-(714, '9311038', 'RIDWAN MINTARJA', 'LOGISTIK', 0),
+(714, '9311038', 'RIDWAN MINTARJA', 'LOGISTIK', 1),
 (715, '9311039', 'RIDWAN MINTARJA', 'LOGISTIK', 0),
 (716, '9311040', 'RIDWAN MINTARJA', 'LOGISTIK', 0),
 (717, '9311041', 'RIDWAN MINTARJA', 'LOGISTIK', 0),
@@ -134,7 +134,7 @@ CREATE TABLE `items` (
 --
 
 INSERT INTO `items` (`id`, `item_name`, `color`, `stock`) VALUES
-(1, 'Sepeda Motor', '#9b59b6', 1),
+(1, 'Sepeda Motor', '#9b59b6', 0),
 (3, 'Smartphone', '#e74c3c', 1),
 (4, 'Kulkas', '#f1c40f', 3),
 (5, 'Mesin Cuci', '#34495e', 3),
@@ -159,7 +159,7 @@ CREATE TABLE `surveys` (
 --
 
 INSERT INTO `surveys` (`id`, `title`, `description`, `is_active`) VALUES
-(1, 'Survey Kepuasan Pelanggan', 'Masukan Anda membantu kami meningkatkan kualitas layanan.', 1);
+(1, 'Survey Refreshing Sinar Jaya Group', 'Masukan Anda membantu kami meningkatkan kualitas layanan.', 1);
 
 -- --------------------------------------------------------
 
@@ -179,7 +179,22 @@ CREATE TABLE `survey_answers` (
 --
 
 INSERT INTO `survey_answers` (`id`, `response_id`, `question_id`, `answer_text`) VALUES
-(3, 2, 3, '12345');
+(36, 8, 14, '12345'),
+(37, 8, 15, 'test'),
+(38, 8, 16, 'test'),
+(39, 8, 17, 'Gelombang 1'),
+(40, 9, 14, '12345'),
+(41, 9, 15, 'test'),
+(42, 9, 16, 'test'),
+(43, 9, 17, 'Gelombang 1'),
+(44, 10, 14, '12344'),
+(45, 10, 15, '12345'),
+(46, 10, 16, 'test'),
+(47, 10, 17, 'Gelombang 2'),
+(48, 11, 14, '123456'),
+(49, 11, 15, 'test'),
+(50, 11, 16, 'test'),
+(51, 11, 17, 'Gelombang 1');
 
 -- --------------------------------------------------------
 
@@ -202,11 +217,10 @@ CREATE TABLE `survey_questions` (
 --
 
 INSERT INTO `survey_questions` (`id`, `survey_id`, `question_text`, `question_type`, `options`, `is_required`, `sort_order`) VALUES
-(3, 1, 'Masukan Nik Anda', 'text', '', 1, 3),
-(7, 1, 'Nama', 'text', '', 1, 4),
-(8, 1, 'Bagian', 'text', '', 1, 5),
-(9, 1, 'Jabatan', 'text', '', 1, 6),
-(10, 1, 'Gelombang', 'text', '', 1, 7);
+(14, 1, 'NIK ( Nomor Induk Karyawan )', 'text', '', 1, 1),
+(15, 1, 'Nama', 'text', '', 1, 2),
+(16, 1, 'Bagian', 'text', '', 1, 3),
+(17, 1, 'Gelombang', 'radio', 'Gelombang 1\r\nGelombang 2', 1, 4);
 
 -- --------------------------------------------------------
 
@@ -226,7 +240,16 @@ CREATE TABLE `survey_responses` (
 
 INSERT INTO `survey_responses` (`id`, `survey_id`, `submitted_at`) VALUES
 (1, 1, '2026-09-23 07:59:43'),
-(2, 1, '2026-09-23 08:25:59');
+(2, 1, '2026-09-23 08:25:59'),
+(3, 1, '2026-09-24 07:03:14'),
+(4, 1, '2026-09-24 07:04:01'),
+(5, 1, '2026-09-24 07:18:22'),
+(6, 1, '2026-09-24 07:18:36'),
+(7, 1, '2026-09-24 07:19:00'),
+(8, 1, '2026-09-24 07:25:00'),
+(9, 1, '2026-09-24 07:25:14'),
+(10, 1, '2026-09-24 07:41:30'),
+(11, 1, '2026-09-24 10:59:31');
 
 -- --------------------------------------------------------
 
@@ -280,7 +303,8 @@ CREATE TABLE `winners` (
 --
 
 INSERT INTO `winners` (`id`, `employee_id`, `nik`, `item_id`, `won_at`) VALUES
-(63, 703, '8004022', 3, '2026-09-23 08:42:15');
+(63, 703, '8004022', 3, '2026-09-23 08:42:15'),
+(64, 714, '9311038', 1, '2026-09-24 08:59:50');
 
 --
 -- Indexes for dumped tables
@@ -361,31 +385,31 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `items`
 --
 ALTER TABLE `items`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `surveys`
 --
 ALTER TABLE `surveys`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `survey_answers`
 --
 ALTER TABLE `survey_answers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
 
 --
 -- AUTO_INCREMENT for table `survey_questions`
 --
 ALTER TABLE `survey_questions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `survey_responses`
 --
 ALTER TABLE `survey_responses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `tb_anggota`
@@ -403,7 +427,7 @@ ALTER TABLE `tb_pengguna`
 -- AUTO_INCREMENT for table `winners`
 --
 ALTER TABLE `winners`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- Constraints for dumped tables
