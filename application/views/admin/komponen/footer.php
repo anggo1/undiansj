@@ -51,7 +51,6 @@
 
     <!-- Page level plugins -->
     <script src="<?= base_url()?>assets/admin/vendor/chart.js/Chart.min.js"></script>
-    <script src="<?= base_url()?>assets/admin/vendor/chart.js/Chart.min.js"></script>
     <script src="<?= base_url()?>assets/admin/vendor/sweetalert2@11.js"></script>
 
     <!-- Page level custom scripts 

@@ -1,12 +1,20 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 class Admin extends CI_Controller {
 
 	public function __construct(){
 		parent::__construct();
 		$this->load->helper('form');
         $this->load->model('Survey_model');
+        $this->load->model('M_tamu'); 
+        $this->load->model('M_undian');
 	}
 
 	public function index()
@@ -127,7 +135,7 @@ class Admin extends CI_Controller {
     $this->db->order_by('e.name', 'ASC');
     $data['winners'] = $this->db->get()->result_array();
 
-    $this->load->view('admin/winners_report_view', $data);
+    $this->load->view('admin/winners_report', $data);
 }
 
 
@@ -181,5 +189,133 @@ class Admin extends CI_Controller {
         $this->Survey_model->delete_question((int) $id);
         $this->session->set_flashdata('success', 'Pertanyaan dihapus.');
         redirect('survey/admin');
+    }
+
+    public function export() {
+        // 1. Ambil data tamu dari database via Model
+        // Sesuai dengan struktur loop foreach ($tamu) di view Anda
+        $tamu = $this->M_tamu->get_all_tamu(); 
+
+        // 2. Inisialisasi PhpSpreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // 3. Buat Header Tabel Excel
+        $sheet->setCellValue('A1', 'No Undian');
+        $sheet->setCellValue('B1', 'NIK');
+        $sheet->setCellValue('C1', 'Nama');
+        $sheet->setCellValue('D1', 'Departemen');
+
+        // 4. Masukkan Data Looping (Mulai dari baris ke-2)
+        $baris = 2;
+        $no = 1;
+        foreach ($tamu as $t) {
+            $sheet->setCellValue('A' . $baris, $no++);
+
+            // Format NIK sebagai teks eksplisit agar angka nol di depan tetap aman (misal: 000123)
+            // Sesuai dengan format di view Anda: 000 + NIK
+            $nik_lengkap = $t->nik;
+            $sheet->setCellValueExplicit('B' . $baris, $nik_lengkap, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('C' . $baris, $t->name);
+            $sheet->setCellValue('D' . $baris, $t->department);
+
+            $baris++;
+        }
+
+        // 5. Otomatisasi Ukuran Kolom (Optional, agar rapi dan tidak terpotong)
+        foreach (range('A', 'D') as $kolom) {
+            $sheet->getColumnDimension($kolom)->setAutoSize(true);
+        }
+
+        // 6. Set Header Browser untuk download file .xlsx
+        $nama_file = "Data_Tamu_" . date('Ymd_His') . ".xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $nama_file . '"');
+        header('Cache-Control: max-age=0');
+        header('Cache-Control: max-age=1'); // Diperlukan untuk stabilitas IE9
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Tanggal lampau
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+        header('Cache-Control: cache, must-revalidate');
+        header('Pragma: public');
+
+        // 7. Proses Tulis dan Download ke Output Browser
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    //hasil undian
+
+    public function export_excel() {
+        $winners = $this->M_undian->get_detail_pemenang();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Daftar Pemenang');
+
+        // 1. Judul Laporan Atas
+        $sheet->mergeCells('A1:E1');
+        $sheet->setCellValue('A1', 'LAPORAN DAFTAR PEMENANG HADIAH UNDIAN');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('4E73DF'));
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // 2. Set Header Tabel Excel
+        $headers = ['No', 'No Undian', 'Nama Hadiah', 'Nama Pemenang', 'NIK', 'Departemen'];
+        $kolomHuruf = ['A', 'B', 'C', 'D', 'E', 'F'];
+        
+        foreach ($headers as $index => $title) {
+            $sheet->setCellValue($kolomHuruf[$index] . '3', $title);
+        }
+
+        // Kustomisasi Gaya Header Tabel (Tema Biru SB Admin 2)
+        $styleHeader = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4E73DF']],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ];
+        $sheet->getStyle('A3:F3')->applyFromArray($styleHeader);
+        $sheet->getRowDimension('4')->setRowHeight(25);
+
+        // 3. Memasukkan Data Looping
+        $baris = 4;
+        $no = 1;
+        foreach ($winners as $winner) {
+            $sheet->setCellValue('A' . $baris, $no++);
+            $sheet->setCellValue('B' . $baris, $winner['employee_id']); // No Undian
+            $sheet->setCellValue('C' . $baris, $winner['item_name']);
+            $sheet->setCellValue('D' . $baris, $winner['nik']);
+            
+            // Kolom NIK dipaksa jadi STRING agar Excel tidak menghilangkan awalan angka nol
+            $sheet->setCellValueExplicit('D' . $baris, $winner['nik'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            
+            $sheet->setCellValue('E' . $baris, $winner['name']);
+            $sheet->setCellValue('F' . $baris, $winner['department']); // Nama Hadiah
+
+            // Beri border tipis di baris data dan set alignment tengah untuk No & NIK
+            $sheet->getStyle("A$baris:F$baris")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("A$baris")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("D$baris")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            $baris++;
+        }
+
+        // 4. Auto Size Lebar Kolom
+        foreach ($kolomHuruf as $k) {
+            $sheet->getColumnDimension($k)->setAutoSize(true);
+        }
+
+        // 5. Pengaturan Dokumen & Download Output ke Browser
+        $nama_file = "Laporan_Pemenang_Undian_" . date('Ymd_His') . ".xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $nama_file . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
     }
 }

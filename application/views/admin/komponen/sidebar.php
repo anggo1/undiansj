@@ -61,6 +61,17 @@
                     <i class="fas fa-fw fa-table"></i>
                     <span>Pertanyaan Kuesioner</span></a>
             </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="<?= base_url()?>admin/winners_report">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Report Undian</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="<?= base_url()?>Survey/report_survey">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Report Kuesioner</span></a>
+            </li>
 			<li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>admin/user">
                     <i class="fas fa-fw fa-user"></i>

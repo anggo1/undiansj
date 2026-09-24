@@ -1,6 +1,4 @@
-<?php
-$this->load->view('admin/komponen/header');
-?>
+
 <!doctype html>
 <html lang="id">
 

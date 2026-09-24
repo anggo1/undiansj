@@ -1,5 +1,12 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+
 class Survey extends CI_Controller
 {
     public function __construct()
@@ -208,5 +215,112 @@ public function check_nik_ajax()
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Gagal menghapus data.']);
         }
+    }
+
+    //report survey
+
+
+    public function report_survey() {
+        $data['questions'] = $this->M_survey->get_questions();
+        $data['chart_data'] = $this->M_survey->get_chart_summary();
+        $data['respondents'] = $this->M_survey->get_raw_responses();
+        
+        $this->load->view('admin/report_survey', $data);
+    }
+
+    public function export_excel() {
+        $questions = $this->M_survey->get_questions();
+        $respondents = $this->M_survey->get_raw_responses();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Hasil Survey Dinamis');
+
+        // Hitung total kolom yang dibutuhkan (No + Jumlah Pertanyaan + Waktu Mengisi)
+        $total_kolom_angka = 1 + count($questions) + 1;
+        $kolom_terakhir = Coordinate::stringFromColumnIndex($total_kolom_angka);
+
+       // 1. Header Judul Atas
+$total_kolom_angka = 1 + count($questions) + 1;
+$kolom_terakhir = Coordinate::stringFromColumnIndex($total_kolom_angka);
+
+// PERBAIKAN: Tambahkan angka 1 setelah titik "." agar formatnya menjadi "A1:F1" bukan "A1:F"
+$sheet->mergeCells("A1:" . $kolom_terakhir . "1"); 
+
+$sheet->setCellValue('A1', 'LAPORAN HASIL RESPONDEN SURVEY (FORMAT DINAMIS)');
+$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1CC88A'));
+$sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+
+        // 2. Set Header Tabel Dinamis
+        $sheet->setCellValue('A3', 'No');
+        
+        $current_col = 2; // Kolom ke-2 adalah B
+        foreach ($questions as $q) {
+            $huruf = Coordinate::stringFromColumnIndex($current_col);
+            $sheet->setCellValue($huruf . '3', $q['question_text']);
+            $current_col++;
+        }
+        // Kolom waktu submit diletakkan paling akhir
+        $huruf_akhir = Coordinate::stringFromColumnIndex($current_col);
+        $sheet->setCellValue($huruf_akhir . '3', 'Waktu Pengisian');
+
+        // Styling Header Tabel (Warna Hijau Sukses SB Admin)
+        $styleHeader = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1CC88A']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ];
+        $sheet->getStyle("A3:".$kolom_terakhir."3")->applyFromArray($styleHeader);
+        $sheet->getRowDimension('3')->setRowHeight(26);
+
+        // 3. Mengisi Baris Data Dinamis
+        $baris = 4;
+        $no = 1;
+        foreach ($respondents as $r) {
+            $sheet->setCellValue('A' . $baris, $no++);
+            
+            $current_col = 2;
+            foreach ($questions as $q) {
+                $huruf = Coordinate::stringFromColumnIndex($current_col);
+                $jawaban = isset($r['answers'][$q['id']]) ? $r['answers'][$q['id']] : '-';
+                
+                // Jika jawaban berupa NIK (angka panjang), set sebagai text agar angka 0 di depan aman
+                if ($q['id'] == 14 || stripos($q['question_text'], 'NIK') !== false) {
+                    $sheet->setCellValueExplicit($huruf . $baris, $jawaban, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                    $sheet->getStyle($huruf . $baris)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                } else {
+                    $sheet->setCellValue($huruf . $baris, $jawaban);
+                }
+                $current_col++;
+            }
+            
+            // Tulis waktu submit di kolom paling belakang
+            $huruf_akhir = Coordinate::stringFromColumnIndex($current_col);
+            $sheet->setCellValue($huruf_akhir . $baris, $r['submitted_at']);
+
+            // Set styling border per baris data
+            $sheet->getStyle("A$baris:".$kolom_terakhir."$baris")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("A$baris")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            $baris++;
+        }
+
+        // 4. Auto Size Lebar Kolom secara Otomatis
+        for ($i = 1; $i <= $total_kolom_angka; $i++) {
+            $k = Coordinate::stringFromColumnIndex($i);
+            $sheet->getColumnDimension($k)->setAutoSize(true);
+        }
+
+        // 5. Transfer ke Browser untuk download (.xlsx)
+        $nama_file = "Laporan_Survey_Dinamis_" . date('Ymd_His') . ".xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $nama_file . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
     }
 }
