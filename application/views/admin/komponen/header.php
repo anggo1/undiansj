@@ -18,12 +18,13 @@
         rel="stylesheet">
 
     <!-- Custom styles for this template-->
+<script src="<?php echo base_url('assets/admin/vendor/sweetalert2/sweetalert2.all.min.js'); ?>"></script>
     <link href="<?= base_url()?>assets/admin/css/sb-admin-2.min.css" rel="stylesheet">
 	<link href="<?= base_url()?>assets/admin/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
-			
+			<!--
 <?php 
     $status = $this->session->userdata('status');
     if ($status == 'login') {

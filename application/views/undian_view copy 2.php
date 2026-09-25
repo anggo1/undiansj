@@ -1,5 +1,3 @@
-
-<script src="<?php echo base_url('assets/admin/vendor/sweetalert2/sweetalert2.all.min.js'); ?>"></script>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -402,28 +400,14 @@
             font-size: 20px;
         }
     }
-    #btn-trigger-logo:hover .logo-overlay { opacity: 1 !important; }
-    #btn-trigger-logo:hover #live-draw-logo { opacity: 0.7; }
     </style>
 </head>
 
 <body>
-    
     <div class="container">
-        
-        <div class="showcase" style="text-align: center; margin-bottom: 35px;">
-    
-    <!-- 1. LOGO DINAMIS (Bisa diklik untuk ganti gambar) -->
-    <div class="logo-container" style="margin-bottom: 15px; display: inline-block; position: relative;">
-        <img src="<?= !empty($data_undian->logo) ? base_url('uploads/logo/'.$data_undian->logo) : base_url('assets/img/default-logo.png'); ?>" 
-                 id="live-draw-logo" 
-                 alt="Logo Undian" 
-                 style="max-height: 90px; width: auto; object-fit: contain; transition: opacity 0.2s;">
-    </div>
-            <h1>🎯 <?php 
-          echo '<font color=white>'.$data_undian->title.'</font>';
-        ?></h1>
-            <p><?= html_escape($data_undian->description) ?></p>
+        <div class="showcase">
+            <h1>Undian Hadiah Karyawan Sinar Jaya Group</h1>
+            <p>Sistem pengundian hadiah secara langsung dan transparan.</p>
         </div>
 
         <div class="main-card">
@@ -716,40 +700,13 @@
     });
 
     spinBtn.addEventListener('click', function() {
-        launchIntoFullscreen(document.documentElement);
+        //launchIntoFullscreen(document.documentElement);
         if (isDrawing) return;
-
-        // 1. Alert: Calon pemenang belum diproses
-        if (currentPendingWinner) {
-            return Swal.fire({
-                icon: 'warning',
-                title: 'Perhatian!',
-                text: 'Masih ada calon pemenang yang belum diproses. Silakan Simpan atau Skip terlebih dahulu.',
-                confirmButtonColor: '#3085d6'
-            });
-        }
-
+        if (currentPendingWinner) return alert(
+            'Masih ada calon pemenang yang belum diproses. Silakan Simpan atau Skip terlebih dahulu.');
         const itemId = parseInt(itemSelect.value || 0, 10);
-
-        // 2. Alert: Hadiah belum dipilih
-        if (!itemId) {
-            return Swal.fire({
-                icon: 'info',
-                title: 'Pilih Hadiah',
-                text: 'Silakan pilih hadiah terlebih dahulu.',
-                confirmButtonColor: '#3085d6'
-            });
-        }
-
-        // 3. Alert: Stok hadiah habis
-        if (itemSelect.options[itemSelect.selectedIndex].disabled) {
-            return Swal.fire({
-                icon: 'error',
-                title: 'Stok Habis',
-                text: 'Stok hadiah ini sudah habis.',
-                confirmButtonColor: '#d33'
-            });
-        }
+        if (!itemId) return alert('Silakan pilih hadiah terlebih dahulu.');
+        if (itemSelect.options[itemSelect.selectedIndex].disabled) return alert('Stok hadiah ini sudah habis.');
 
         setDrawingState(true);
         resultStatus.textContent = 'MENENTUKAN NOMOR PEMENANG...';
@@ -777,7 +734,7 @@
             })
             .then(function(data) {
                 if (data.status !== 'success') throw new Error(data.message ||
-                    'Gagal menentukan pemenang.');
+                'Gagal menentukan pemenang.');
                 pendingDrawData = data;
                 if (stopRequested) finishDraw(data);
                 else resultStatus.textContent = 'NOMOR BERPUTAR... TEKAN STOP UNDI';
@@ -788,14 +745,7 @@
                 spinBtn.style.display = 'inline-block';
                 setDrawingState(false);
                 resetResult();
-
-                // 4. Alert: Error saat proses draw
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Kesalahan',
-                    text: error.message || 'Terjadi kesalahan.',
-                    confirmButtonColor: '#d33'
-                });
+                alert(error.message || 'Terjadi kesalahan.');
             });
     });
 
@@ -809,208 +759,118 @@
     });
 
     saveWinnerBtn.addEventListener('click', function() {
-        if (!currentPendingWinner) {
-            return Swal.fire({
-                icon: 'warning',
-                title: 'Kosong',
-                text: 'Tidak ada calon pemenang.',
-                confirmButtonColor: '#3085d6'
-            });
-        }
-
+        if (!currentPendingWinner) return alert('Tidak ada calon pemenang.');
         stopVictory();
+        if (!confirm('Simpan ' + currentPendingWinner.employee_name + ' sebagai pemenang ' +
+                currentPendingWinner.item_name + '?')) return;
+        saveWinnerBtn.disabled = true;
+        skipWinnerBtn.disabled = true;
+        saveWinnerBtn.textContent = '⏳ Menyimpan...';
+        fetch('<?= site_url('undian/save_winner'); ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: ''
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.status !== 'success') throw new Error(data.message || 'Pemenang gagal disimpan.');
 
-        Swal.fire({
-            title: 'Simpan Pemenang?',
-            text: 'Simpan ' + currentPendingWinner.employee_name + ' sebagai pemenang ' +
-                currentPendingWinner.item_name + '?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, Simpan!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                saveWinnerBtn.disabled = true;
-                skipWinnerBtn.disabled = true;
-                saveWinnerBtn.textContent = '⏳ Menyimpan...';
+                // 1. Perbarui sisa kandidat dan stok item di background
+                updateCandidateCount(data.remaining_candidate_count !== undefined ? data
+                    .remaining_candidate_count : parseInt(candidateCount.textContent, 10) - 1);
+                updateItemStock(data.item_id, parseInt(data.remaining_stock, 10));
+                addWinnerToHistory(data.item_id, data.winner_name);
 
-                fetch('<?= site_url('undian/save_winner'); ?>', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-                        },
-                        body: ''
-                    })
-                    .then(function(response) {
-                        return response.json();
-                    })
-                    .then(function(data) {
-                        if (data.status !== 'success') throw new Error(data.message || 'Pemenang gagal disimpan.');
+                // 2. Kosongkan data calon pemenang yang baru saja disimpan
+                currentPendingWinner = null;
 
-                        // --- 1. AMBIL JUMLAH ASLI DARI DATABASE (100% AKURAT) ---
-                        if (data.remaining_candidate_count !== undefined) {
-                            // Menggunakan data dari return controller utama
-                            updateCandidateCount(data.remaining_candidate_count);
-                        } else {
-                            // Cadangan darurat: Tembak API khusus untuk cek sisa kandidat real di DB
-                            fetch('<?= site_url('undian/get_sisa_kandidat_json'); ?>')
-                                .then(res => res.json())
-                                .then(resData => {
-                                    if(resData.sisa !== undefined) updateCandidateCount(resData.sisa);
-                                });
-                        }
+                // 3. Reset teks tampilan hasil undian menjadi kosong / default seperti baru
+                resultStatus.textContent = 'SIAP MEMULAI UNDIAN';
+                resultName.textContent = '-';
+                resultNik.textContent = '';
+                resultDept.textContent = '';
+                resultItem.textContent = '';
 
-                        updateItemStock(data.item_id, parseInt(data.remaining_stock, 10));
-                        addWinnerToHistory(data.item_id, data.winner_name);
+                // 4. Aktifkan kembali kontrol tombol utama
+                hideWinnerActions();
+                itemSelect.disabled = false;
+                spinBtn.disabled = false;
+                saveWinnerBtn.disabled = false;
+                skipWinnerBtn.disabled = false;
+                saveWinnerBtn.textContent = '💾 Simpan Pemenang';
 
-                        // 2. Kosongkan data calon pemenang yang baru saja disimpan
-                        currentPendingWinner = null;
+                // 5. Kembalikan dropdown pilihan item ke opsi default (kosong)
+                itemSelect.value = '';
 
-                        // 3. Reset teks tampilan hasil undian menjadi kosong / default seperti baru
-                        resultStatus.textContent = 'SIAP MEMULAI UNDIAN';
-                        resultName.textContent = '-';
-                        resultNik.textContent = '';
-                        resultDept.textContent = '';
-                        resultItem.textContent = '';
-
-                        // 4. Aktifkan kembali kontrol tombol utama
-                        hideWinnerActions();
-                        itemSelect.disabled = false;
-                        spinBtn.disabled = false;
-                        saveWinnerBtn.disabled = false;
-                        skipWinnerBtn.disabled = false;
-                        saveWinnerBtn.textContent = '💾 Simpan Pemenang';
-
-                        // 5. Kembalikan dropdown pilihan item ke opsi default (kosong)
-                        itemSelect.value = '';
-
-                        // Tampilkan SweetAlert sukses kecil di pojok (Toast)
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Pemenang Berhasil Disimpan!',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true
-                        });
-                    })
-                    .catch(function(error) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal',
-                            text: error.message || 'Gagal menyimpan pemenang.',
-                            confirmButtonColor: '#d33'
-                        });
-                        saveWinnerBtn.disabled = false;
-                        skipWinnerBtn.disabled = false;
-                        saveWinnerBtn.textContent = '💾 Simpan Pemenang';
-                    });
-            }
-        });
+                // tambahan agar halaman di-refresh untuk menampilkan data terbaru dari server (opsional)
+                location.reload();
+                // alert('Data pemenang disimpan dan tampilan telah di-reset!');
+            })
+            .catch(function(error) {
+                alert(error.message || 'Gagal menyimpan pemenang.');
+                saveWinnerBtn.disabled = false;
+                skipWinnerBtn.disabled = false;
+                saveWinnerBtn.textContent = '💾 Simpan Pemenang';
+            });
     });
-
 
     skipWinnerBtn.addEventListener('click', function() {
-        // 8. Alert: Tidak ada calon pemenang untuk di-skip
-        if (!currentPendingWinner) {
-            return Swal.fire({
-                icon: 'warning',
-                title: 'Kosong',
-                text: 'Tidak ada calon pemenang.',
-                confirmButtonColor: '#3085d6'
-            });
-        }
-
+        if (!currentPendingWinner) return alert('Tidak ada calon pemenang.');
         stopVictory();
-
-        // 9. Confirm & Proses: Konfirmasi Skip Pemenang
-        Swal.fire({
-            title: 'Apakah Anda Yakin?',
-            text: 'Skip ' + currentPendingWinner.employee_name +
-                '? Orang ini tidak akan disimpan sebagai pemenang.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, Skip!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Eksekusi jika user menekan tombol "Ya, Skip!"
-                saveWinnerBtn.disabled = true;
-                skipWinnerBtn.disabled = true;
-                skipWinnerBtn.textContent = '⏳ Memproses...';
-
-                fetch('<?= site_url('undian/skip_winner'); ?>', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-                        },
-                        body: ''
-                    })
-                    .then(function(response) {
-                        return response.json();
-                    })
-                    .then(function(data) {
-                        if (data.status !== 'success') throw new Error(data.message ||
-                            'Gagal melakukan skip.');
-                        resultStatus.textContent = 'CALON PEMENANG DI-SKIP';
-                        resultName.textContent = data.skipped_name || currentPendingWinner
-                            .employee_name;
-                        resultNik.textContent = '';
-                        resultDept.textContent = '';
-                        resultItem.textContent = 'Orang tidak ada — belum disimpan';
-                        currentPendingWinner = null;
-                        drawNumber.textContent = '—';
-                        hideWinnerActions();
-                        itemSelect.disabled = false;
-                        spinBtn.disabled = false;
-                        saveWinnerBtn.disabled = false;
-                        skipWinnerBtn.disabled = false;
-                        skipWinnerBtn.textContent =
-                            '⏭️ Skip / Orang Tidak Ada';
-                        // Notifikasi sukses skip
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Di-skip!',
-                            text: 'Calon pemenang berhasil dilewati.',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    }).catch(function(
-                        error) { // 10. Alert: Gagal melakukan skip
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal',
-                            text: error.message || 'Gagal melakukan skip.',
-                            confirmButtonColor: '#d33'
-                        });
-                        saveWinnerBtn.disabled = false;
-                        skipWinnerBtn.disabled = false;
-                        skipWinnerBtn.textContent = '⏭️ Skip / Orang Tidak Ada';
-                    });
-            }
-        });
+        if (!confirm('Skip ' + currentPendingWinner.employee_name +
+                '? Orang ini tidak akan disimpan sebagai pemenang.')) return;
+        saveWinnerBtn.disabled = true;
+        skipWinnerBtn.disabled = true;
+        skipWinnerBtn.textContent = '⏳ Memproses...';
+        fetch('<?= site_url('undian/skip_winner'); ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: ''
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.status !== 'success') throw new Error(data.message || 'Gagal melakukan skip.');
+                resultStatus.textContent = 'CALON PEMENANG DI-SKIP';
+                resultName.textContent = data.skipped_name || currentPendingWinner.employee_name;
+                resultNik.textContent = '';
+                resultDept.textContent = '';
+                resultItem.textContent = 'Orang tidak ada — belum disimpan';
+                currentPendingWinner = null;
+                drawNumber.textContent = '—';
+                hideWinnerActions();
+                itemSelect.disabled = false;
+                spinBtn.disabled = false;
+                saveWinnerBtn.disabled = false;
+                skipWinnerBtn.disabled = false;
+                skipWinnerBtn.textContent = '⏭️ Skip / Orang Tidak Ada';
+            })
+            .catch(function(error) {
+                alert(error.message || 'Gagal melakukan skip.');
+                saveWinnerBtn.disabled = false;
+                skipWinnerBtn.disabled = false;
+                skipWinnerBtn.textContent = '⏭️ Skip / Orang Tidak Ada';
+            });
     });
-
 
     itemSelect.addEventListener('change', function() {
         const option = itemSelect.options[itemSelect.selectedIndex];
-        if (option && option.value && parseInt(option.dataset.stock ||
-                0, 10) <= 0) {
+        if (option && option.value && parseInt(option.dataset.stock || 0, 10) <= 0) {
             alert('Stok hadiah ini sudah habis.');
             itemSelect.value = '';
         }
     });
     if (currentPendingWinner) {
         itemSelect.value = currentPendingWinner.item_id;
-        drawNumber.textContent = currentPendingWinner.employee_number ||
-            currentPendingWinner.employee_id;
-        showWinner(currentPendingWinner.employee_name, currentPendingWinner
-            .employee_nik, currentPendingWinner
+        drawNumber.textContent = currentPendingWinner.employee_number || currentPendingWinner.employee_id;
+        showWinner(currentPendingWinner.employee_name, currentPendingWinner.employee_nik, currentPendingWinner
             .employee_department, currentPendingWinner.item_name);
         showWinnerActions();
         itemSelect.disabled = true;
@@ -1029,12 +889,7 @@
             element.msRequestFullscreen();
         }
     }
-   
-   
-    //logo atas
-    
-</script>
-
+    </script>
 
 </body>
 

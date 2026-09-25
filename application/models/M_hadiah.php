@@ -4,7 +4,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class M_hadiah extends CI_Model {
 
     // Tentukan nama tabel di database Anda
-    protected $table = 'hadiah'; 
+    protected $table = 'items'; 
 
     public function __construct() {
         parent::__construct();
@@ -16,11 +16,11 @@ class M_hadiah extends CI_Model {
     public function get_all_items() {
         // Contoh jika ada tabel relasi undian untuk menghitung hadiah yang sudah terpakai
         // Jika belum ada tabel undian, Anda bisa menghapus bagian SELECT & LEFT JOIN di bawah ini.
-        $this->db->select('hadiah.*, COUNT(undian.id) as total_terundi');
+        $this->db->select('items.*, COUNT(undian.id) as total_terundi');
         $this->db->from($this->table);
-        $this->db->join('undian', 'undian.hadiah_id = hadiah.id', 'left');
-        $this->db->group_by('hadiah.id');
-        $this->db->order_by('hadiah.id', 'DESC');
+        $this->db->join('undian', 'undian.item_id = items.id', 'left');
+        $this->db->group_by('items.id');
+        $this->db->order_by('items.id', 'DESC');
         
         return $this->db->get()->result();
     }
@@ -46,8 +46,8 @@ class M_hadiah extends CI_Model {
      */
     public function delete_item($id) {
         // Keamanan Tambahan: Pastikan hadiah belum pernah diundi sebelum dihapus
-        $this->db->where('hadiah_id', $id);
-        $terundi = $this->db->count_all_results('undian');
+        $this->db->where('item_id', $id);
+        $terundi = $this->db->count_all_results('winners'); // Misal ada tabel 'winners' yang menyimpan data pemenang
 
         if ($terundi > 0) {
             return false; // Gagal menghapus karena hadiah sudah digunakan sistem

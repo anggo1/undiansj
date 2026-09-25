@@ -341,44 +341,27 @@ class Undian extends CI_Controller
         /*
          * Hanya POST.
          */
-        if (
-            $this->input->method(TRUE)
-            !== 'POST'
-        ) {
+        if ($this->input->method(TRUE) !== 'POST') {
             return $this->_json_response(
                 'error',
                 'Metode request tidak diperbolehkan.',
                 405
             );
         }
-
-
         /*
          * Ambil calon pemenang dari session.
          */
-        $pending =
-            $this->session->userdata(
-                'pending_winner'
-            );
+        $pending = $this->session->userdata( 'pending_winner' );
 
 
-        if (empty($pending)) {
-
-            return $this->_json_response(
+        if (empty($pending)) { return $this->_json_response(
                 'error',
                 'Tidak ada calon pemenang yang menunggu untuk disimpan.',
                 400
             );
         }
-
-
-        $employee_id =
-            (int) $pending['employee_id'];
-
-        $item_id =
-            (int) $pending['item_id'];
-
-
+        $employee_id = (int) $pending['employee_id'];
+        $item_id = (int) $pending['item_id'];
         /*
          * =====================================================
          * TRANSACTION
@@ -390,25 +373,13 @@ class Undian extends CI_Controller
         /*
          * Lock employee.
          */
-        $employee =
-            $this->db
-                ->query(
-                    'SELECT *
-                     FROM employees
-                     WHERE id = ?
-                     LIMIT 1
-                     FOR UPDATE',
-                    array(
-                        $employee_id
-                    )
-                )
+        $employee = $this->db
+                ->query( 'SELECT * FROM employees WHERE id = ? LIMIT 1 FOR UPDATE', array($employee_id))
                 ->row_array();
 
 
         if (!$employee) {
-
             $this->db->trans_rollback();
-
             return $this->_json_response(
                 'error',
                 'Data karyawan tidak ditemukan.',
@@ -421,46 +392,21 @@ class Undian extends CI_Controller
          * Pastikan belum menang.
          */
         if (
-            (int) $employee['is_won']
-            === 1
-        ) {
-
+            (int) $employee['is_won'] === 1) {
             $this->db->trans_rollback();
-
-            $this->session->unset_userdata(
-                'pending_winner'
-            );
-
-            return $this->_json_response(
-                'error',
-                'Karyawan tersebut sudah memiliki hadiah.',
-                409
-            );
+            $this->session->unset_userdata('pending_winner');
+            return $this->_json_response('error','Karyawan tersebut sudah memiliki hadiah.',409);
         }
-
-
         /*
          * Lock hadiah.
          */
-        $item =
-            $this->db
-                ->query(
-                    'SELECT *
-                     FROM items
-                     WHERE id = ?
-                     LIMIT 1
-                     FOR UPDATE',
-                    array(
-                        $item_id
-                    )
-                )
+        $item = $this->db
+                ->query('SELECT * FROM items WHERE id = ? LIMIT 1 FOR UPDATE', array($item_id))
                 ->row_array();
 
 
         if (!$item) {
-
             $this->db->trans_rollback();
-
             return $this->_json_response(
                 'error',
                 'Hadiah tidak ditemukan.',
@@ -478,7 +424,6 @@ class Undian extends CI_Controller
         ) {
 
             $this->db->trans_rollback();
-
             return $this->_json_response(
                 'error',
                 'Stok hadiah sudah habis.',
@@ -566,7 +511,7 @@ if ($this->db->affected_rows() < 0) {
                         $item_id
                 )
             );
-
+        $real_remaining = $this->db->where('is_won', 0)->count_all_results('employees');
 
         if (!$insert) {
 
@@ -654,7 +599,8 @@ if ($this->db->affected_rows() < 0) {
                     $item['item_name'],
 
                 'remaining_stock' =>
-                    $remaining_stock
+                    $remaining_stock,
+                'remaining_candidate_count' => $real_remaining
             )
         );
     }

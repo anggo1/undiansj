@@ -31,7 +31,8 @@
 <div class="container">
     <h1>🎯 Undian Hadiah Barang Karyawan</h1>
     
-    <label for="itemSelect"><strong>Pilih Hadiah Barang Yang Akan Diundi:</strong></label><br>
+    <label for="itemSelect"><strong>Pilih Hadiah Barang Yang Akan Diundi:</strong></label>
+    <br>
     <select id="itemSelect">
         <option value="">-- Silakan Pilih Hadiah Dahulu --</option>
         <?php foreach($items as $item): ?>

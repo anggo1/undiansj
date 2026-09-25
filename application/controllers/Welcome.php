@@ -37,6 +37,9 @@ class Welcome extends CI_Controller
         $data['candidate_count'] = $this->candidate_count();
         $data['employees'] = array();
         $data['pending_winner'] = $this->session->userdata('pending_winner');
+        //$data['data_undian'] = $this->db->get('undian')->result_array();
+        //$data['data_undian'] = $this->db->get('undian')->row_array();
+        $data['data_undian'] = $this->db->get('undian')->row(); 
 
         $this->db->select('i.*, (SELECT COUNT(*) FROM winners w WHERE w.item_id = i.id) AS total_terundi, GROUP_CONCAT(e.name SEPARATOR ", ") AS nama_pemenang', FALSE);
         $this->db->from('items i');
@@ -142,4 +145,12 @@ class Welcome extends CI_Controller
         $this->session->unset_userdata('pending_winner');
         return $this->json_response(array('status' => 'success', 'skipped_name' => $pending['employee_name']));
     }
+
+    //logo atas
+    public function get_logo()
+    {
+        $logo = $this->db->get_where('settings', array('key' => 'logo'))->row_array();
+        return $this->json_response(array('status' => 'success', 'logo_url' => base_url('uploads/' . $logo['value'])));
+    }
+
 }

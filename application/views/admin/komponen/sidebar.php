@@ -43,33 +43,38 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>admin/tamu">
-                    <i class="fas fa-fw fa-table"></i>
-                    <span>Data Tamu</span></a>
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>Data Peserta Undian</span></a>
+            </li>
+             <li class="nav-item">
+                <a class="nav-link" href="<?= base_url()?>Admin/manage_draw">
+                    <i class="fas fa-fw fa-gift"></i>
+                    <span>Data Undian</span></a>
             </li>
              <li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>admin/items">
-                    <i class="fas fa-fw fa-table"></i>
+                    <i class="fas fa-fw fa-gift"></i>
                     <span>Data Hadiah</span></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>Survey/title">
-                    <i class="fas fa-fw fa-table"></i>
+                    <i class="fas fa-fw fa-laptop-code"></i>
                     <span>Data Kuesioner</span></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>admin/Pertanyaan">
-                    <i class="fas fa-fw fa-table"></i>
+                    <i class="fas fa-fw fa-list-alt"></i>
                     <span>Pertanyaan Kuesioner</span></a>
             </li>
             
             <li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>admin/winners_report">
-                    <i class="fas fa-fw fa-table"></i>
+                    <i class="fas fa-fw fa-gifts"></i>
                     <span>Report Undian</span></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="<?= base_url()?>Survey/report_survey">
-                    <i class="fas fa-fw fa-table"></i>
+                    <i class="fas fa-fw fa-list-ol"></i>
                     <span>Report Kuesioner</span></a>
             </li>
 			<li class="nav-item">

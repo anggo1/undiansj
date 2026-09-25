@@ -323,4 +323,35 @@ $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENT
         $writer->save('php://output');
         exit;
     }
+    public function get_question_json($id) {
+    // Ambil data berdasarkan ID
+    $question = $this->db->get_where('survey_questions', ['id' => $id])->row();
+    
+    // Set header agar dibaca sebagai JSON murni oleh jQuery
+    $this->output
+         ->set_content_type('application/json')
+         ->set_output(json_encode($question));
+}
+
+// Memproses Update Data dari Modal
+public function update_question() {
+    $id = $this->input->post('id');
+    $type = $this->input->post('question_type');
+    
+    // Hilangkan opsi jika bertipe teks biasa
+    $options = ($type == 'text' || $type == 'textarea') ? null : $this->input->post('options');
+
+    $update_data = [
+        'question_text' => $this->input->post('question_text'),
+        'question_type' => $type,
+        'is_required'   => $this->input->post('is_required') ? 1 : 0,
+        'options'       => $options
+    ];
+
+    $this->db->where('id', $id);
+    $this->db->update('survey_questions', $update_data); // Sesuaikan dengan nama tabel Anda
+
+    $this->session->set_flashdata('success', 'Pertanyaan berhasil diperbarui.');
+    redirect($_SERVER['HTTP_REFERER']); // Kembali ke halaman asal survey
+}
 }

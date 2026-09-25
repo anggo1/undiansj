@@ -15,6 +15,8 @@ class Admin extends CI_Controller {
         $this->load->model('Survey_model');
         $this->load->model('M_tamu'); 
         $this->load->model('M_undian');
+        $this->load->model('M_hadiah');
+        $this->load->library('upload');
 	}
 
 	public function index()
@@ -51,8 +53,8 @@ class Admin extends CI_Controller {
         ];
 
         // Jalankan query simpan database
-        // $insert_id = $this->M_hadiah->insert($data_insert);
-        $insert_id = rand(1, 100); // Simulasi ID untuk keperluan testing
+        $insert_id = $this->M_hadiah->insert_item($data_insert);
+        //$insert_id = rand(1, 100); // Simulasi ID untuk keperluan testing
 
         if ($insert_id) {
             echo json_encode([
@@ -81,8 +83,8 @@ class Admin extends CI_Controller {
         ];
 
         // Jalankan query update berdasarkan ID
-        // $update = $this->M_hadiah->update($id, $data_update);
-        $update = true; // Simulasi sukses
+         $update = $this->M_hadiah->update_item($id, $data_update);
+        //$update = true; // Simulasi sukses
 
         if ($update) {
             echo json_encode(['status' => 'success']);
@@ -96,13 +98,13 @@ class Admin extends CI_Controller {
         $id = $this->input->post('item_id', TRUE);
 
         // Jalankan query delete berdasarkan ID
-        // $delete = $this->M_hadiah->delete($id);
-        $delete = true; // Simulasi sukses
+         $delete = $this->M_hadiah->delete_item($id);
+        //$delete = true; // Simulasi sukses
 
         if ($delete) {
             echo json_encode(['status' => 'success']);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Gagal menghapus dari database.']);
+            echo json_encode(['status' => 'error', 'message' => 'Ada Data Pemenang untuk hadiah ini.']);
         }
     }
 
@@ -317,5 +319,95 @@ class Admin extends CI_Controller {
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
+    }
+    //logo pengundian
+    public function manage_draw() {
+        $data['surveys'] = $this->db->get('undian')->result(); // Ganti 'surveys' dengan nama tabel Anda
+        $this->load->view('admin/draw_setting', $data);
+    }
+
+    // PROSES TAMBAH DATA
+    public function add_survey_process() {
+        $title = $this->input->post('title');
+        $desc  = $this->input->post('description');
+        $logo  = null;
+
+        if (!empty($_FILES['logo']['name'])) {
+            $logo = $this->_upload_logo_handler();
+        }
+
+        $insert_data = [
+            'title'       => $title,
+            'description' => $desc,
+            'logo'        => $logo
+        ];
+
+        $this->db->insert('undian', $insert_data);
+            $this->session->set_flashdata('success', 'Data undian baru berhasil disimpan.');
+            redirect('admin/draw_setting');
+    }
+
+    // AJAX ENDPOINT FETCH DATA KHUSUS EDIT MODAL
+    public function get_survey_json($id) {
+        $data = $this->db->get_where('undian', ['id' => $id])->row();
+        echo json_encode($data);
+    }
+
+    // PROSES EDIT / UPDATE DATA
+    public function edit_survey_process() {
+        $id = $$this->input->post('id');
+        $title = $$this->input->post('title');
+        $description = $$this->input->post('description');
+
+        $data = array(
+            'title' => $title,
+            'description' => $description
+        );
+
+        // Cek jika user mengunggah logo baru
+        if (!empty($_FILES['logo']['name'])) {
+            $config['upload_path']   = './uploads/logo/';
+            $config['allowed_types'] = 'gif|jpg|png|jpeg';
+            $config['max_size']      = 2048; // 2MB
+            $config['encrypt_name']  = TRUE;
+
+            $this->load->library('upload', $config);
+
+            if ($$this->upload->do_upload('logo')) {
+                $upload_data = $$this->upload->data();
+                $data['logo'] = $upload_data['file_name'];
+
+                // Opsional: Hapus logo lama dari folder uploads agar tidak menumpuk
+                $old_data = $$this->db->get_where('undian', array('id' => $id))->row();
+                if (!empty($old_data->logo) && file_exists('./uploads/logo/' . $old_data->logo)) {
+                    unlink('./uploads/logo/' . $old_data->logo);
+                }
+            }
+        }
+
+        $$this->db->where('id', $id);
+        $$this->db->update('undian', $data);
+
+        // Redirect kembali ke halaman utama admin undian
+        redirect('Admin'); 
+    }
+
+    // 3. Proses Hapus Data Undian
+    public function delete_survey_process($id) {
+        // Ambil data untuk menghapus file gambarnya juga
+        $data = $$this->db->get_where('undian', array('id' => $id))->row();
+        
+        if ($data) {
+            // Hapus berkas file fisik logo jika ada
+            if (!empty($data->logo) && file_exists('./uploads/logo/' . $data->logo)) {
+                unlink('./uploads/logo/' . $data->logo);
+            }
+
+            // Hapus data dari database
+            $$this->db->where('id', $id);
+            $$this->db->delete('undian');
+        }
+
+        redirect('Admin');
     }
 }
