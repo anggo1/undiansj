@@ -23,7 +23,7 @@ $this->load->view('admin/komponen/navbar');
                     </h6>
                 </div>
                 <div class="card-body">
-                    <?= form_open_multipart('Admin/add_survey_process') ?>
+<?= form_open_multipart('Admin/add_survey_process', ['id' => 'formTambahSurvey']) ?>
 
                     <div class="form-group">
                         <label class="font-weight-bold">Judul Undian / Survey</label>
@@ -86,11 +86,6 @@ $this->load->view('admin/komponen/navbar');
                                         <p class="text-muted small mb-0"><?= html_escape($s->description) ?></p>
                                     </td>
                                     <td class="text-center align-middle">
-                                        <a href="<?= site_url('admin/draw/'.$s->id) ?>"
-                                            class="btn btn-info btn-circle btn-sm shadow-sm mr-1"
-                                            title="Buka Halaman Draw">
-                                            <i class="fas fa-play"></i>
-                                        </a>
                                         <button class="btn btn-warning btn-circle btn-sm shadow-sm mr-1 btn-edit-survey"
                                             data-id="<?= $s->id ?>" title="Edit">
                                             <i class="fas fa-pencil-alt"></i>
@@ -161,15 +156,75 @@ $this->load->view('admin/komponen/navbar');
 <script>
 $(document).ready(function() {
     // 1. INPUT FILE CUSTOM LABEL
-    $('.custom-file-input').on('change', function() {
+    $(document).on('change', '.custom-file-input', function() {
         let fileName = $(this).val().split('\\').pop();
         $(this).next('.custom-file-label').addClass("selected").html(fileName);
     });
 
-    // 2. LOGIK TOMBOL EDIT (AJAX + Swal untuk Error)
-    $('.btn-edit-survey').on('click', function() {
-        const id = $(this).data('id');
+    // 2. PROSES AJAX TAMBAH DATA
+        // 2. PROSES AJAX TAMBAH DATA (Perbaikan agar Swal Pasti Tampil)
+    $('#formTambahSurvey').on('submit', function(e) {
+        e.preventDefault(); // MUTLAK: Mencegah form melakukan redirect/reload halaman
         
+        $.ajax({
+            url: $(this).attr('action'),
+            type: "POST",
+            data: new FormData(this), // Menggunakan FormData untuk menghandle upload file logo
+            processData: false,
+            contentType: false,
+            dataType: "JSON",
+            beforeSend: function() {
+                // Menampilkan animasi loading SweetAlert sebelum data terkirim
+                Swal.fire({
+                    title: 'Menyimpan...',
+                    text: 'Sedang memproses data undian.',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+            },
+            success: function(response) {
+                if(response.status === 'success') {
+                    // TAMPILKAN SWAL SAAT INPUT SUKSES
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Input Sukses!',
+                        text: response.message,
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#3085d6'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Cara aman mereset form di jQuery tanpa memicu error crash script
+                            $('#formTambahSurvey')[0].reset(); 
+                            $('.custom-file-label').removeClass("selected").html("Pilih Gambar...");
+                            
+                            // Muat ulang halaman untuk memperbarui data tabel
+                            location.reload(); 
+                        }
+                    });
+                } else {
+                    Swal.fire({ 
+                        icon: 'error', 
+                        title: 'Gagal Menyimpan!', 
+                        text: response.message 
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                // Jika terjadi error, tampilkan detailnya di console untuk tracing
+                console.error("AJAX Error: ", xhr.responseText);
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Error Sistem!', 
+                    text: 'Gagal terhubung ke server atau terjadi kesalahan sistem.' 
+                });
+            }
+        });
+    });
+
+
+    // 3. LOGIK TOMBOL EDIT (Tampilkan Modal Data)
+    $('#tableSurvey').on('click', '.btn-edit-survey', function() {
+        const id = $(this).data('id');
         $.ajax({
             url: "<?= site_url('Admin/get_survey_json/') ?>" + id,
             type: "GET",
@@ -191,19 +246,54 @@ $(document).ready(function() {
                 }
             },
             error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: 'Gagal mengambil data dari server.',
-                    confirmButtonColor: '#3085d6'
-                });
+                Swal.fire({ icon: 'error', title: 'Gagal!', text: 'Gagal mengambil data dari server.' });
             }
         });
     });
 
-    // 3. LOGIK TOMBOL HAPUS (Swal Konfirmasi)
-    $('.btn-hapus-survey').on('click', function() {
+    // 4. PROSES AJAX SIMPAN EDIT DATA
+    $('#formEditSurvey').on('submit', function(e) {
+        e.preventDefault();
+        
+        $.ajax({
+            url: $(this).attr('action'),
+            type: "POST",
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            dataType: "JSON",
+            beforeSend: function() {
+                Swal.fire({
+                    title: 'Memperbarui...',
+                    text: 'Sedang menyimpan perubahan.',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+            },
+            success: function(response) {
+                if(response.status === 'success') {
+                    $('#modalEditSurvey').modal('hide');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Diperbarui!',
+                        text: response.message
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Gagal!', text: response.message });
+                }
+            },
+            error: function() {
+                Swal.fire({ icon: 'error', title: 'Error!', text: 'Terjadi kesalahan saat memperbarui data.' });
+            }
+        });
+    });
+
+    // 5. PROSES AJAX HAPUS DATA
+    $('#tableSurvey').on('click', '.btn-hapus-survey', function() {
         const url = $(this).data('href');
+        const row = $(this).closest('tr'); // Tangkap baris tabel yang akan dihapus
         
         Swal.fire({
             title: 'Apakah Anda yakin?',
@@ -216,16 +306,36 @@ $(document).ready(function() {
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Beri efek loading sebelum dialihkan
-                Swal.fire({
-                    title: 'Memproses...',
-                    text: 'Sedang menghapus data.',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    dataType: "JSON",
+                    beforeSend: function() {
+                        Swal.fire({
+                            title: 'Memproses...',
+                            text: 'Sedang menghapus data.',
+                            allowOutsideClick: false,
+                            didOpen: () => { Swal.showLoading(); }
+                        });
+                    },
+                    success: function(response) {
+                        if(response.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Terhapus!',
+                                text: response.message
+                            });
+                            row.fadeOut(500, function() { 
+                                $(this).remove(); // Hapus baris secara visual tanpa reload halaman
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Gagal!', text: response.message });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({ icon: 'error', title: 'Error!', text: 'Gagal menghapus data dari server.' });
                     }
                 });
-                window.location.href = url;
             }
         });
     });
