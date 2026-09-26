@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="id">
 
@@ -46,10 +45,56 @@
     .is-invalid.form-underline:focus {
         border-bottom: 2px solid #e74a3b;
     }
+   /* Full page spinner overlay */
+    #pageOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.85);
+        z-index: 9999;
+        display: none; /* Disembunyikan secara default */
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    /* Custom Animasi Loader Bar */
+    .loader {
+        width: 120px;
+        height: 22px;
+        border-radius: 20px;
+        color: #514b82; /* Bisa diganti #4e73df jika ingin senada dengan biru tema */
+        border: 2px solid;
+        position: relative;
+        margin-bottom: 15px; 
+    }
+    .loader::before {
+        content: "";
+        position: absolute;
+        margin: 2px;
+        inset: 0 100% 0 0;
+        border-radius: inherit;
+        background: currentColor;
+        animation: l6 2s infinite;
+    }
+    @keyframes l6 {
+        100% {inset:0}
+    }
+    .playstore-spinner {
+        width: 3.5rem;
+        height: 3.5rem;
+        color: #4e73df; /* Mengikuti warna biru tema Anda */
+    }
     </style>
 </head>
 
 <body>
+    <div id="pageOverlay">
+        <div class="loader"></div>
+        <h5 class="text-gray-800 font-weight-bold">Mohon tunggu...</h5>
+    </div>
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-lg-8 col-md-10">
@@ -164,7 +209,11 @@
                 <!-- Tombol Aksi Submit Form -->
                 <div class="d-flex justify-content-between align-items-center mb-5">
                     <button type="submit" id="btnSubmit" class="btn btn-primary px-5 py-2 shadow font-weight-bold">
-                        <i class="fas fa-paper-plane mr-2"></i> Kirim Tanggapan
+                        <span id="btnIcon"><i class="fas fa-paper-plane mr-2"></i></span>
+                        <!-- Tambahkan spinner Bootstrap (disembunyikan secara default) -->
+                        <span id="btnSpinner" class="spinner-border spinner-border-sm mr-2" role="status"
+                            aria-hidden="true" style="display: none;"></span>
+                        <span id="btnText">Kirim Tanggapan</span>
                     </button>
                 </div>
 
@@ -183,8 +232,9 @@
     <script src="<?= base_url()?>assets/admin/js/sb-admin-2.min.js"></script>
 
     <!-- Script Utama Validasi AJAX Real-time -->
+    <!-- Script Utama Validasi AJAX Real-time dan Submit Spinner -->
+<!-- Script Utama Validasi AJAX Real-time dan Full Page Spinner -->
     <script>
-    // Cek NIK saat mengetik (keyup) atau saat kursor berpindah fokus (blur)
     $(document).ready(function() {
         // Fungsi utama pengecekan NIK
         $('.nik-input').on('blur keyup', function() {
@@ -193,7 +243,7 @@
             var questionId = inputField.data('qid');
             var feedbackDiv = inputField.siblings('.nik-feedback');
             var submitBtn = $('#btnSubmit');
-            // BARU: Pengecekan AJAX aktif jika panjang karakter minimal 4 angka
+            
             if (nikValue.length >= 4) {
                 feedbackDiv.removeClass('text-success text-danger').addClass('text-muted').html(
                     ' Memeriksa basis data NIK...').show();
@@ -207,19 +257,17 @@
                     },
                     success: function(response) {
                         if (response.status === 'exists') {
-                            // Jika NIK sama/sudah ada di database
                             feedbackDiv.removeClass('text-muted text-success').addClass(
                                 'text-danger').html(
                                 ' Maaf, NIK ini sudah pernah digunakan.');
                             inputField.addClass('is-invalid').removeClass('is-valid');
-                            submitBtn.prop('disabled', true); // Blokir tombol kirim
+                            submitBtn.prop('disabled', true);
                         } else if (response.status === 'available') {
-                            // Jika NIK belum ada di database
                             feedbackDiv.removeClass('text-muted text-danger').addClass(
                                 'text-success').html(
                                 ' NIK valid & belum pernah digunakan.');
                             inputField.removeClass('is-invalid').addClass('is-valid');
-                            submitBtn.prop('disabled', false); // Aktifkan tombol kirim
+                            submitBtn.prop('disabled', false);
                         }
                     },
                     error: function() {
@@ -228,20 +276,29 @@
                     }
                 });
             } else if (nikValue.length > 0 && nikValue.length < 4) {
-                // Peringatan jika pengguna mengetik kurang dari 4 angka
                 feedbackDiv.removeClass('text-success text-muted').addClass('text-danger').text(
                     'Format salah. NIK wajib berisi minimal 4 angka.').show();
                 inputField.addClass('is-invalid').removeClass('is-valid');
-                submitBtn.prop('disabled', true); // Blokir tombol kirim
+                submitBtn.prop('disabled', true);
             } else {
                 feedbackDiv.hide();
                 inputField.removeClass('is-invalid is-valid');
                 submitBtn.prop('disabled', false);
             }
         });
+
         // Proteksi keyboard: Hanya mengizinkan pengetikan karakter angka (0-9)
         $('.nik-input').on('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Menangani aksi saat form disubmit (Menampilkan Full Page Overlay)
+        $('#surveyForm').on('submit', function() {
+            // Tampilkan overlay layar penuh dengan flexbox agar elemen berada di tengah
+            $('#pageOverlay').css('display', 'flex');
+            
+            // Nonaktifkan tombol agar tidak di-klik dua kali saat loading
+            $('#btnSubmit').prop('disabled', true);
         });
     });
     </script>
