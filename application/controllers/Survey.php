@@ -219,119 +219,43 @@ public function check_nik_ajax()
 
     //report survey
 
-
     public function report_survey() {
-        $data['questions'] = $this->M_survey->get_questions();
-        $data['chart_data'] = $this->M_survey->get_chart_summary();
-        $data['respondents'] = $this->M_survey->get_raw_responses();
+        $survey_id = $this->input->get('survey_id', TRUE);
+        $gelombang_val = $this->input->get('gelombang', TRUE);
+
+        // Fallback default jika parameter survey_id tidak ada
+        if (!$survey_id) {
+            $active_survey = $this->db->get_where('surveys', ['is_active' => 1], 1)->row();
+            $survey_id = $active_survey ? $active_survey->id : 0;
+            if (!$survey_id) {
+                $latest_survey = $this->db->order_by('id', 'DESC')->get('surveys', 1)->row();
+                $survey_id = $latest_survey ? $latest_survey->id : 0;
+            }
+        }
+
+        $data['all_surveys'] = $this->M_survey->get_all();
+        $data['selected_survey_id'] = $survey_id;
+        $data['selected_gelombang'] = $gelombang_val;
+
+        // 1. Deteksi ID pertanyaan berteks 'Gelombang'
+        $gelombang_q_id = $this->M_survey->get_gelombang_question_id($survey_id);
+        $data['list_gelombang'] = $this->M_survey->get_list_gelombang($gelombang_q_id);
+
+        // 2. Ambil data list pertanyaan & tanggapan untuk data mentah tabel
+        $data['questions'] = $this->M_survey->get_questions($survey_id);
+        $data['respondents'] = $this->M_survey->get_raw_responses_filtered($survey_id, $gelombang_q_id, $gelombang_val);
+
+        // 3. PANGGIL DATA GRAFIK BARU (Berdasarkan jawaban asli yang tersimpan di DB)
+        $chart_data = $this->M_survey->get_answers_chart_dynamic($survey_id, $gelombang_q_id, $gelombang_val);
         
+        $data['chart_title']  = $chart_data['title'];
+        $data['chart_labels'] = $chart_data['labels'];
+        $data['chart_values'] = $chart_data['values'];
+
         $this->load->view('admin/report_survey', $data);
     }
 
-    public function export_excel() {
-        $questions = $this->M_survey->get_questions();
-        $respondents = $this->M_survey->get_raw_responses();
 
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Hasil Survey Dinamis');
-
-        // Hitung total kolom yang dibutuhkan (No + Jumlah Pertanyaan + Waktu Mengisi)
-        $total_kolom_angka = 1 + count($questions) + 1;
-        $kolom_terakhir = Coordinate::stringFromColumnIndex($total_kolom_angka);
-
-       // 1. Header Judul Atas
-$total_kolom_angka = 1 + count($questions) + 1;
-$kolom_terakhir = Coordinate::stringFromColumnIndex($total_kolom_angka);
-
-// PERBAIKAN: Tambahkan angka 1 setelah titik "." agar formatnya menjadi "A1:F1" bukan "A1:F"
-$sheet->mergeCells("A1:" . $kolom_terakhir . "1"); 
-
-$sheet->setCellValue('A1', 'LAPORAN HASIL RESPONDEN SURVEY (FORMAT DINAMIS)');
-$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1CC88A'));
-$sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-
-        // 2. Set Header Tabel Dinamis
-        $sheet->setCellValue('A3', 'No');
-        
-        $current_col = 2; // Kolom ke-2 adalah B
-        foreach ($questions as $q) {
-            $huruf = Coordinate::stringFromColumnIndex($current_col);
-            $sheet->setCellValue($huruf . '3', $q['question_text']);
-            $current_col++;
-        }
-        // Kolom waktu submit diletakkan paling akhir
-        $huruf_akhir = Coordinate::stringFromColumnIndex($current_col);
-        $sheet->setCellValue($huruf_akhir . '3', 'Waktu Pengisian');
-
-        // Styling Header Tabel (Warna Hijau Sukses SB Admin)
-        $styleHeader = [
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1CC88A']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
-        ];
-        $sheet->getStyle("A3:".$kolom_terakhir."3")->applyFromArray($styleHeader);
-        $sheet->getRowDimension('3')->setRowHeight(26);
-
-        // 3. Mengisi Baris Data Dinamis
-        $baris = 4;
-        $no = 1;
-        foreach ($respondents as $r) {
-            $sheet->setCellValue('A' . $baris, $no++);
-            
-            $current_col = 2;
-            foreach ($questions as $q) {
-                $huruf = Coordinate::stringFromColumnIndex($current_col);
-                $jawaban = isset($r['answers'][$q['id']]) ? $r['answers'][$q['id']] : '-';
-                
-                // Jika jawaban berupa NIK (angka panjang), set sebagai text agar angka 0 di depan aman
-                if ($q['id'] == 14 || stripos($q['question_text'], 'NIK') !== false) {
-                    $sheet->setCellValueExplicit($huruf . $baris, $jawaban, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-                    $sheet->getStyle($huruf . $baris)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                } else {
-                    $sheet->setCellValue($huruf . $baris, $jawaban);
-                }
-                $current_col++;
-            }
-            
-            // Tulis waktu submit di kolom paling belakang
-            $huruf_akhir = Coordinate::stringFromColumnIndex($current_col);
-            $sheet->setCellValue($huruf_akhir . $baris, $r['submitted_at']);
-
-            // Set styling border per baris data
-            $sheet->getStyle("A$baris:".$kolom_terakhir."$baris")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-            $sheet->getStyle("A$baris")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            
-            $baris++;
-        }
-
-        // 4. Auto Size Lebar Kolom secara Otomatis
-        for ($i = 1; $i <= $total_kolom_angka; $i++) {
-            $k = Coordinate::stringFromColumnIndex($i);
-            $sheet->getColumnDimension($k)->setAutoSize(true);
-        }
-
-        // 5. Transfer ke Browser untuk download (.xlsx)
-        $nama_file = "Laporan_Survey_Dinamis_" . date('Ymd_His') . ".xlsx";
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $nama_file . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
-    }
-    public function get_question_json($id) {
-    // Ambil data berdasarkan ID
-    $question = $this->db->get_where('survey_questions', ['id' => $id])->row();
-    
-    // Set header agar dibaca sebagai JSON murni oleh jQuery
-    $this->output
-         ->set_content_type('application/json')
-         ->set_output(json_encode($question));
-}
 
 // Memproses Update Data dari Modal
 public function update_question() {
@@ -354,4 +278,131 @@ public function update_question() {
     $this->session->set_flashdata('success', 'Pertanyaan berhasil diperbarui.');
     redirect($_SERVER['HTTP_REFERER']); // Kembali ke halaman asal survey
 }
+    public function export_excel($survey_id = null)
+    {
+        // 1. Ambil Parameter ID Survey (dari segment URL atau parameter fungsi)
+        if (!$survey_id) {
+            $survey_id = $this->input->get('survey_id', TRUE);
+        }
+        
+        // Fallback default jika ID tetap kosong, ambil kuesioner aktif pertama
+        if (!$survey_id) {
+            $active_survey = $this->db->get_where('surveys', ['is_active' => 1], 1)->row();
+            $survey_id = $active_survey ? $active_survey->id : 0;
+            if (!$survey_id) {
+                $latest_survey = $this->db->order_by('id', 'DESC')->get('surveys', 1)->row();
+                $survey_id = $latest_survey ? $latest_survey->id : 0;
+            }
+        }
+
+        // 2. Ambil Parameter Filter Gelombang dari query string GET
+        $gelombang_val = $this->input->get('gelombang', TRUE);
+
+        // Ambil meta data profil kuesioner
+        $survey_meta = $this->db->get_where('surveys', ['id' => $survey_id])->row();
+        
+        // Cari ID pertanyaan yang merupakan input penentu 'Gelombang'
+        $gelombang_q_id = $this->M_survey->get_gelombang_question_id($survey_id);
+
+        // Tarik susunan matriks pertanyaan dan data responden yang sudah TERFILTER
+        $questions = $this->M_survey->get_questions($survey_id);
+        $respondents = $this->M_survey->get_raw_responses_filtered($survey_id, $gelombang_q_id, $gelombang_val);
+
+        // 3. Inisialisasi PhpSpreadsheet Core Engine
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Responden Survey');
+
+        // Hitung batas total kolom horizontal (No + Jumlah Kuesioner + Waktu Input)
+        $total_kolom_angka = 1 + count($questions) + 1;
+        $kolom_terakhir = Coordinate::stringFromColumnIndex($total_kolom_angka);
+
+        // 4. Render Judul Banner Laporan Utama (Baris ke-1)
+        $sheet->mergeCells("A1:" . $kolom_terakhir . "1"); 
+        $judul_text = 'LAPORAN HASIL RESPONDEN: ' . strtoupper($survey_meta ? $survey_meta->title : 'SURVEY EVALUASI');
+        if (!empty($gelombang_val)) {
+            $judul_text .= ' - ' . strtoupper($gelombang_val);
+        }
+        $sheet->setCellValue('A1', $judul_text);
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1CC88A'));
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Sub-Header Info rekam unduhan (Baris ke-2)
+        $sheet->mergeCells("A2:" . $kolom_terakhir . "2");
+        $sheet->setCellValue('A2', 'Data dicetak otomatis pada: ' . date('d-M-Y H:i:s') . ' | Total Responden: ' . count($respondents) . ' Orang');
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10);
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // 5. Render Komponen Kepala Tabel / Header Grid Dinamis (Baris ke-4)
+        $sheet->setCellValue('A4', 'No');
+        
+        $current_col = 2; // Index B
+        foreach ($questions as $q) {
+            $huruf = Coordinate::stringFromColumnIndex($current_col);
+            $sheet->setCellValue($huruf . '4', $q['question_text']);
+            $current_col++;
+        }
+        $huruf_akhir = Coordinate::stringFromColumnIndex($current_col);
+        $sheet->setCellValue($huruf_akhir . '4', 'Waktu Pengisian');
+
+        // Definisi Tampilan Header Resmi (SB Admin Success Theme)
+        $styleHeader = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1CC88A']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ];
+        $sheet->getStyle("A4:".$kolom_terakhir."4")->applyFromArray($styleHeader);
+        $sheet->getRowDimension('4')->setRowHeight(28);
+
+        // 6. Pengisian Dataset Konten Responden per Baris secara Berurutan
+        $baris = 5;
+        $no = 1;
+        foreach ($respondents as $r) {
+            $sheet->setCellValue('A' . $baris, $no++);
+            
+            $current_col = 2;
+            foreach ($questions as $q) {
+                $huruf = Coordinate::stringFromColumnIndex($current_col);
+                $jawaban = isset($r['answers'][$q['id']]) ? $r['answers'][$q['id']] : '-';
+                
+                // PROTEKSI DATA NIK: Cegah auto-format scientific / hilangnya angka 0 di depan
+                if (stripos($q['question_text'], 'NIK') !== false || (strlen($jawaban) >= 10 && is_numeric($jawaban))) {
+                    $sheet->setCellValueExplicit($huruf . $baris, $jawaban, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                    $sheet->getStyle($huruf . $baris)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                } else {
+                    $sheet->setCellValue($huruf . $baris, $jawaban);
+                }
+                $current_col++;
+            }
+            
+            // Kolom penanda waktu submits
+            $huruf_akhir = Coordinate::stringFromColumnIndex($current_col);
+            $sheet->setCellValue($huruf_akhir . $baris, date('d-m-Y H:i', strtotime($r['submitted_at'])));
+
+            // Penataan garis tepi tipis dan perataan nomor
+            $sheet->getStyle("A$baris:".$kolom_terakhir."$baris")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("A$baris")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getRowDimension($baris)->setRowHeight(20);
+            
+            $baris++;
+        }
+
+        // 7. Auto-Fit Lebar Kolom secara Proporsional mengikuti isi string
+        for ($i = 1; $i <= $total_kolom_angka; $i++) {
+            $k = Coordinate::stringFromColumnIndex($i);
+            $sheet->getColumnDimension($k)->setAutoSize(true);
+        }
+
+        // 8. Stream output menuju ke berkas berkstensi .xlsx pada browser
+        $nama_file = "Laporan_Survey_Terfilter_" . date('Ymd_His') . ".xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $nama_file . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
 }

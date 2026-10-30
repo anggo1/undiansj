@@ -36,6 +36,7 @@ $this->load->view('admin/komponen/navbar');
                     <thead>
                         <tr>
                             <th>No</th>
+                            <th>Kupon</th>
                             <th>NIK</th>
                             <th>Nama</th>
                             <th>Departemen</th>
@@ -45,6 +46,7 @@ $this->load->view('admin/komponen/navbar');
                         <?php $no=1; foreach ($tamu as $t) { ?>
                         <tr>
                             <td><?= $no++?></td>
+                            <td><?= $t->id?></td>
                             <td><?= $t->nik?></td>
                             <td><?= $t->name?></td>
                             <td><?= $t->department?></td>
@@ -189,15 +191,16 @@ $(document).ready(function() {
             
             // Penjelasan isi array index DataTables:
             // dataBaris[0] = No / No Kupon
-            // dataBaris[1] = NIK
-            // dataBaris[2] = Nama
-            // dataBaris[3] = Departemen
+            // dataBaris[1] = Kupon
+            // dataBaris[2] = NIK
+            // dataBaris[3] = Nama
+            // dataBaris[4] = Departemen
             
             // Hilangkan spasi dan ubah ke text mentah untuk memastikan tidak terganggu tag HTML
-            var cellNoKupon = $('<div>').html(dataBaris[0]).text().trim();
-            var cellNik     = $('<div>').html(dataBaris[1]).text().trim();
-            var cellNama    = $('<div>').html(dataBaris[2]).text().trim();
-            var cellDept    = $('<div>').html(dataBaris[3]).text().trim();
+            var cellNoKupon = $('<div>').html(dataBaris[1]).text().trim();
+            var cellNik     = $('<div>').html(dataBaris[2]).text().trim();
+            var cellNama    = $('<div>').html(dataBaris[3]).text().trim();
+            var cellDept    = $('<div>').html(dataBaris[4]).text().trim();
             
             // Validasi pencarian (Mencocokkan NIK atau Nama secara presisi/parsial)
             if (cellNik.toLowerCase().includes(keyword) || cellNama.toLowerCase().includes(keyword)) {
